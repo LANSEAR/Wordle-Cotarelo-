@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.gradle.api.tasks.Copy
-
+import org.gradle.api.file.DuplicatesStrategy
 
 
 plugins {
@@ -46,7 +46,9 @@ tasks.withType<KotlinCompile>().configureEach {
         jvmTarget.set(JvmTarget.JVM_21)
     }
 }
-
+tasks.processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
 tasks.withType<JavaCompile>().configureEach {
     options.release.set(21)
 }
