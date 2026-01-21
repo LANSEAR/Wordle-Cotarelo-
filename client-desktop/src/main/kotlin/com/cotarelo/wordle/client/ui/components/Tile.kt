@@ -14,12 +14,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.cotarelo.wordle.client.ui.screens.TileState
+import com.cotarelo.wordle.shared.model.TileState
 
 @Composable
-fun Tile(letter: Char, state: TileState) {
-
-    val (bg, border, fg) = when (state) {
+fun Tile(
+    letter: Char,
+    state: TileState,
+    modifier: Modifier = Modifier
+) {
+    val (backgroundColor, borderColor, textColor) = when (state) {
         TileState.Empty -> Triple(
             Color.Transparent,
             Color(0xFF3A3A3C),
@@ -43,17 +46,17 @@ fun Tile(letter: Char, state: TileState) {
     }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(52.dp)
-            .background(bg)
-            .border(BorderStroke(2.dp, border)),
+            .background(backgroundColor)
+            .border(BorderStroke(2.dp, borderColor)),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = if (letter == ' ') "" else letter.toString(),
+            text = letter.takeIf { it != ' ' }?.toString() ?: "",
             fontSize = 22.sp,
             fontWeight = FontWeight.Black,
-            color = fg
+            color = textColor
         )
     }
 }

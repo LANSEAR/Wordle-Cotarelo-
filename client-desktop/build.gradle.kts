@@ -1,5 +1,8 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.gradle.api.tasks.Copy
+
+
 
 plugins {
     id("org.jetbrains.kotlin.jvm")
@@ -11,16 +14,32 @@ plugins {
 dependencies {
     implementation(project(":shared"))
     implementation(compose.desktop.currentOs)
+    implementation(compose.material)
+
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
-    implementation(compose.material)
 }
 
-kotlin { jvmToolchain(25) }
+kotlin {
+    jvmToolchain(21)
+}
 
 java {
-    toolchain { languageVersion.set(JavaLanguageVersion.of(25)) }
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
 }
+
+/**
+ * ✅ Asegura que src/main/resources entra en el classpath
+ * y se copie a build/resources/main
+ */
+sourceSets {
+    main {
+        resources.srcDirs("src/main/resources")
+    }
+}
+
 
 tasks.withType<KotlinCompile>().configureEach {
     compilerOptions {
