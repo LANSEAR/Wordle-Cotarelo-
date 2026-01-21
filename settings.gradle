@@ -1,0 +1,13 @@
+rootProject.name = "wordle_cotarelo"
+
+include(":client-desktop")
+include(":server")
+include(":shared")
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        google()
+        gradlePluginPortal()
+    }
+}

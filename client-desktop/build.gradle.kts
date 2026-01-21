@@ -1,0 +1,38 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+plugins {
+    id("org.jetbrains.kotlin.jvm")
+    id("org.jetbrains.compose")
+    id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.kotlin.plugin.serialization")
+}
+
+dependencies {
+    implementation(project(":shared"))
+    implementation(compose.desktop.currentOs)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.serialization.json)
+}
+
+kotlin { jvmToolchain(24) }
+
+java {
+    toolchain { languageVersion.set(JavaLanguageVersion.of(24)) }
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_21)
+    }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(21)
+}
+
+compose.desktop {
+    application {
+        mainClass = "com.cotarelo.wordle.client.MainKt"
+    }
+}
