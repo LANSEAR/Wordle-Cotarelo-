@@ -1,15 +1,20 @@
 package com.cotarelo.wordle.client
 
-import androidx.compose.material.Text
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.darkColors
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import com.cotarelo.wordle.shared.TestShared
+import com.cotarelo.wordle.client.ui.screens.GameScreen
 
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
-        title = "Wordle - Smoke Test"
+        title = "Wordle"
     ) {
-        Text(TestShared.greeting("CLIENT"))
+        MaterialTheme(
+            colors = darkColors()
+        ) {
+            GameScreen()
+        }
     }
 }

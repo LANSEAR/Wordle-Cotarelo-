@@ -13,12 +13,13 @@ dependencies {
     implementation(compose.desktop.currentOs)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
+    implementation(compose.material)
 }
 
-kotlin { jvmToolchain(24) }
+kotlin { jvmToolchain(25) }
 
 java {
-    toolchain { languageVersion.set(JavaLanguageVersion.of(24)) }
+    toolchain { languageVersion.set(JavaLanguageVersion.of(25)) }
 }
 
 tasks.withType<KotlinCompile>().configureEach {
