@@ -161,7 +161,7 @@ private fun SettingDifficulty(value: Difficulty, onChange: (Difficulty) -> Unit)
         Text(
             text = when (value) {
                 Difficulty.EASY -> "Palabras comunes"
-                Difficulty.NORMAL -> "Comunes (por ahora)"
+                Difficulty.NORMAL -> "Comunes (mezcla ligera)"
                 Difficulty.HARD -> "Palabras raras"
             },
             style = MaterialTheme.typography.caption
@@ -175,7 +175,6 @@ private fun TimerSecondsSelector(value: Int, onChange: (Int) -> Unit) {
         Text("Tiempo máximo: $value s", style = MaterialTheme.typography.body2)
         Spacer(Modifier.height(8.dp))
 
-        // Máximo 180 (3 min) según requisitos
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(60, 120, 180).forEach { option ->
                 val selected = option == value

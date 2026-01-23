@@ -18,6 +18,7 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
+    implementation(compose.materialIconsExtended) // 👈 ESTA ES LA CLAVE
 }
 
 kotlin {

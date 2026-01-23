@@ -50,6 +50,14 @@ fun GameScreen(
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
+    // Auto-ocultar mensajes (diccionario, faltan letras, etc.)
+    LaunchedEffect(controller.state.message) {
+        if (!controller.state.message.isNullOrBlank()) {
+            delay(1500)
+            controller.clearMessage()
+        }
+    }
+
     // Cuenta atrás (solo si se está jugando y NO hay diálogo)
     LaunchedEffect(settings.timerEnabled, timerMax, roundIndex, controller.state.status, showEndDialog) {
         if (!settings.timerEnabled) return@LaunchedEffect
@@ -81,17 +89,13 @@ fun GameScreen(
             endText = buildString {
                 append("La palabra era: ${controller.solution}\n")
                 if (bestOf > 1) append("Marcador: $wins - $losses\n")
-                append(
-                    if (seriesEnd) "Serie terminada."
-                    else "¿Pasar a la siguiente ronda?"
-                )
+                append(if (seriesEnd) "Serie terminada." else "¿Pasar a la siguiente ronda?")
             }
             endIsSeriesEnd = seriesEnd
             showEndDialog = true
         }
     }
 
-    // UI + Fondo + Foco click
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
         Column(
             modifier = Modifier
@@ -104,7 +108,6 @@ fun GameScreen(
                 .focusRequester(focusRequester)
                 .focusable()
                 .onPreviewKeyEvent { event ->
-                    // Si hay diálogo, bloquea teclado
                     if (showEndDialog) return@onPreviewKeyEvent true
 
                     if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
@@ -152,7 +155,19 @@ fun GameScreen(
 
             Spacer(Modifier.height(12.dp))
 
+            // Tablero + teclado en pantalla
             GameContent(controller = controller)
+
+            // ✅ Mensaje debajo del tablero (p. ej. "No está en el diccionario")
+            val msg = controller.state.message
+            if (!msg.isNullOrBlank()) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = msg,
+                    color = MaterialTheme.colors.error,
+                    style = MaterialTheme.typography.body2
+                )
+            }
         }
 
         if (showEndDialog) {
@@ -165,7 +180,6 @@ fun GameScreen(
                         showEndDialog = false
 
                         if (endIsSeriesEnd) {
-                            // Serie terminada: vuelve al menú (o podrías dejar “Reiniciar”)
                             onBackToMenu()
                         } else {
                             roundIndex += 1
@@ -183,7 +197,6 @@ fun GameScreen(
                 },
                 dismissButton = {
                     OutlinedButton(onClick = {
-                        // Solo permitir “volver” si aún no acabó la serie
                         showEndDialog = false
                         focusRequester.requestFocus()
                     }) { Text("Cerrar") }

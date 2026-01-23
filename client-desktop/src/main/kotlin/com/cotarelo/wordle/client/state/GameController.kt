@@ -20,12 +20,10 @@ class GameController(
     val solution: String
         get() = secret
 
-    // Listas para escoger secret según dificultad
+    // Diccionarios
     private var commonList: List<String> = emptyList()
     private var rareList: List<String> = emptyList()
     private var secretList: List<String> = emptyList()
-
-    // Set para validar guesses (unión common+rare)
     private var allowedSet: Set<String> = emptySet()
 
     private var secret: String = ""
@@ -67,6 +65,10 @@ class GameController(
         )
     }
 
+    fun clearMessage() {
+        state = state.copy(message = null)
+    }
+
     fun onLetter(c: Char) {
         if (state.status != GameState.Status.Playing) return
         if (state.currentCol >= state.cols) return
@@ -106,8 +108,10 @@ class GameController(
         val row = state.currentRow
         val guess = state.letters[row].joinToString("").uppercase()
 
+        // ✅ Si no está en diccionario: mensaje + borrar fila + volver al inicio
         if (guess !in allowedSet) {
             state = state.copy(message = "No está en el diccionario")
+            clearRow(row)
             return
         }
 
@@ -126,7 +130,6 @@ class GameController(
                 lastRow -> GameState.Status.Lost
                 else -> GameState.Status.Playing
             },
-            // OJO: este mensaje puede no llegar a verse si tu UI muestra un diálogo y pasa de ronda
             message = when {
                 won -> "¡Correcto!"
                 lastRow -> "Fin. Era: $secret"
@@ -144,29 +147,22 @@ class GameController(
         commonList = WordRepository.loadWordsFromResource(commonPath, length = wl)
         rareList = WordRepository.loadWordsFromResource(rarePath, length = wl)
 
-        // Allowed guesses = unión (si una está vacía, usa la otra)
-        allowedSet = (commonList + rareList).toHashSet().ifEmpty {
-            // último fallback: permitir lo que haya en la secretList (la rellenamos abajo)
-            emptySet()
-        }
+        allowedSet = (commonList + rareList).toHashSet()
 
-        // Secret list según dificultad
         secretList = when (difficulty) {
             Difficulty.EASY -> commonList.ifEmpty { rareList }
             Difficulty.HARD -> rareList.ifEmpty { commonList }
             Difficulty.NORMAL -> mixCommonRare(commonList, rareList, commonWeight = 0.7)
         }
 
-        // Si allowedSet estaba vacío pero hay secretList, úsala como allowed también
         if (allowedSet.isEmpty() && secretList.isNotEmpty()) {
             allowedSet = secretList.toHashSet()
         }
 
-        // Si todo está vacío, mejor error claro (así no te quedas “atascado”)
         if (secretList.isEmpty()) {
             error(
                 "Diccionarios vacíos para longitud $wl.\n" +
-                        "Revisa resources: $commonPath y $rarePath (deben tener palabras de $wl letras)."
+                        "Revisa resources: $commonPath y $rarePath (palabras de $wl letras)."
             )
         }
     }
@@ -175,12 +171,6 @@ class GameController(
         secret = secretList.random()
     }
 
-    /**
-     * Mezcla common/rare para NORMAL.
-     * - 70% common, 30% rare por defecto
-     * - Si rare está vacío, usa common
-     * - Si common está vacío, usa rare
-     */
     private fun mixCommonRare(common: List<String>, rare: List<String>, commonWeight: Double): List<String> {
         if (common.isEmpty()) return rare
         if (rare.isEmpty()) return common
@@ -192,8 +182,19 @@ class GameController(
         mixed.addAll(common.shuffled().take(commonTarget))
         mixed.addAll(rare.shuffled())
 
-        // quitamos duplicados si hubiera
         return mixed.distinct()
+    }
+
+    // ✅ Borra la fila actual (para palabra inválida)
+    private fun clearRow(r: Int) {
+        var lettersCleared = state.letters
+        for (c in 0 until state.cols) {
+            lettersCleared = lettersCleared.updateChar(r, c, ' ')
+        }
+        state = state.copy(
+            letters = lettersCleared,
+            currentCol = 0
+        )
     }
 
     private fun List<List<Char>>.updateChar(r: Int, c: Int, value: Char): List<List<Char>> =

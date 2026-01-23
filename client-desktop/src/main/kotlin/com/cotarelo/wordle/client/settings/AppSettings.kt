@@ -6,10 +6,11 @@ import kotlinx.serialization.Serializable
 data class AppSettings(
     val wordLength: Int = 5,
     val maxAttempts: Int = 6,
-    val roundsBestOf: Int = 1,          // 1 = sin rondas, 3/5/7 = BO3/5/7
+    val roundsBestOf: Int = 1,
     val difficulty: Difficulty = Difficulty.NORMAL,
     val timerEnabled: Boolean = false,
-    val timerSeconds: Int = 180
+    val timerSeconds: Int = 180,
+    val themeMode: ThemeMode = ThemeMode.DARK
 ) {
     fun sanitized(): AppSettings {
         val wl = wordLength.coerceIn(4, 7)
