@@ -82,22 +82,18 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingWordLength(value: Int, onChange: (Int) -> Unit) {
-    Row(
-        Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text("Longitud palabra", modifier = Modifier.weight(1f))
+    Column(Modifier.fillMaxWidth()) {
+        Text("Longitud palabra", style = MaterialTheme.typography.subtitle1)
+        Spacer(Modifier.height(8.dp))
         Stepper(value = value, min = 4, max = 7, onChange = onChange)
     }
 }
 
 @Composable
 private fun SettingMaxAttempts(value: Int, onChange: (Int) -> Unit) {
-    Row(
-        Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text("Intentos máximos", modifier = Modifier.weight(1f))
+    Column(Modifier.fillMaxWidth()) {
+        Text("Intentos máximos", style = MaterialTheme.typography.subtitle1)
+        Spacer(Modifier.height(8.dp))
         Stepper(value = value, min = 4, max = 10, onChange = onChange)
     }
 }
