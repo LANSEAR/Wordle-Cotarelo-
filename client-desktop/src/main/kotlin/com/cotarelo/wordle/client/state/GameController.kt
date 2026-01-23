@@ -8,18 +8,48 @@ import com.cotarelo.wordle.shared.model.TileState
 import com.cotarelo.wordle.shared.model.evaluateGuess
 
 class GameController(
-    resourcePath: String = "words_es_5.txt",
-    wordLength: Int = 5
+    private var resourcePath: String = "words_es_5.txt",
+    private var wordLength: Int = 5,
+    private var maxAttempts: Int = 6
 ) {
-    var state by mutableStateOf(GameState(cols = wordLength))
+    var state by mutableStateOf(GameState(rows = maxAttempts, cols = wordLength))
         private set
 
-    private val dictionaryList: List<String> =
+    private var dictionaryList: List<String> =
         WordRepository.loadWordsFromResource(resourcePath, length = wordLength)
 
-    private val dictionarySet: Set<String> = dictionaryList.toHashSet()
+    private var dictionarySet: Set<String> = dictionaryList.toHashSet()
 
-    private val secret: String = dictionaryList.random()
+    private var secret: String = dictionaryList.random()
+
+    /**
+     * Reinicia la partida respetando (o cambiando) longitud e intentos.
+     * - Relee el diccionario si cambia la longitud o el resourcePath
+     * - Elige nueva palabra secreta
+     * - Resetea el state (tablero + cursor + status)
+     */
+    fun newGame(
+        wordLength: Int = this.wordLength,
+        maxAttempts: Int = this.maxAttempts,
+        resourcePath: String = this.resourcePath
+    ) {
+        val wl = wordLength.coerceIn(4, 7)
+        val ma = maxAttempts.coerceIn(4, 10)
+
+        val needReload = (wl != this.wordLength) || (resourcePath != this.resourcePath)
+
+        this.wordLength = wl
+        this.maxAttempts = ma
+        this.resourcePath = resourcePath
+
+        if (needReload) {
+            dictionaryList = WordRepository.loadWordsFromResource(resourcePath, length = wl)
+            dictionarySet = dictionaryList.toHashSet()
+        }
+
+        secret = dictionaryList.random()
+        state = GameState(rows = ma, cols = wl)
+    }
 
     fun onLetter(c: Char) {
         if (state.status != GameState.Status.Playing) return
@@ -95,4 +125,18 @@ class GameController(
 
     private fun List<List<TileState>>.updateRow(r: Int, newRow: List<TileState>): List<List<TileState>> =
         mapIndexed { ri, row -> if (ri == r) newRow else row }
+
+    companion object {
+        fun newSinglePlayer(wordLength: Int, maxAttempts: Int): GameController {
+            val wl = wordLength.coerceIn(4, 7)
+            val ma = maxAttempts.coerceIn(4, 10)
+            val resource = "words_es_${wl}.txt" // IMPORTANTE: crea estos ficheros o ajusta si no los tienes
+
+            return GameController(
+                resourcePath = resource,
+                wordLength = wl,
+                maxAttempts = ma
+            )
+        }
+    }
 }

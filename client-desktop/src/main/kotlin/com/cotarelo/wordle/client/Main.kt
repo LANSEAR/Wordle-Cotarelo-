@@ -12,7 +12,8 @@ fun main() = application {
         title = "Wordle"
     ) {
         MaterialTheme(colors = darkColors()) {
-            AppRoot()
+            AppRoot(onExitRequest = ::exitApplication)
         }
     }
+
 }

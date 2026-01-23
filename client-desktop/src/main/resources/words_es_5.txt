@@ -88,8 +88,4 @@ jarra
 tazon
 plato
 horno
-calor
-frios
-aguas
-nubes
-cielo
+
