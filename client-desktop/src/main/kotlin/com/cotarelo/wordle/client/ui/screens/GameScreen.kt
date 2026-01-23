@@ -1,11 +1,10 @@
 package com.cotarelo.wordle.client.ui.screens
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -13,119 +12,187 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import com.cotarelo.wordle.client.settings.AppSettings
 import com.cotarelo.wordle.client.state.GameController
-import com.cotarelo.wordle.client.ui.components.Board
-import com.cotarelo.wordle.client.ui.components.Keyboard
+import com.cotarelo.wordle.client.state.GameState
+import kotlinx.coroutines.delay
 
 @Composable
 fun GameScreen(
     settings: AppSettings,
     onBackToMenu: () -> Unit
 ) {
-    // Controller con tamaño según settings
-    val controller = remember(settings.wordLength, settings.maxAttempts) {
+    val bestOf = settings.roundsBestOf.takeIf { it in setOf(1, 3, 5, 7) } ?: 1
+
+    var roundIndex by remember(bestOf, settings.wordLength, settings.maxAttempts, settings.difficulty) { mutableStateOf(1) }
+    var wins by remember(bestOf, settings.wordLength, settings.maxAttempts, settings.difficulty) { mutableStateOf(0) }
+    var losses by remember(bestOf, settings.wordLength, settings.maxAttempts, settings.difficulty) { mutableStateOf(0) }
+
+    val controller = remember(settings.wordLength, settings.maxAttempts, settings.difficulty) {
         GameController.newSinglePlayer(
             wordLength = settings.wordLength,
-            maxAttempts = settings.maxAttempts
+            maxAttempts = settings.maxAttempts,
+            difficulty = settings.difficulty
         )
     }
 
-    val state = controller.state
-
-    // Foco para teclado físico
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(settings.wordLength, settings.maxAttempts) {
-        // cuando cambian settings o entras a la pantalla, pide foco
-        focusRequester.requestFocus()
+    // Timer
+    val timerMax = settings.timerSeconds.coerceIn(30, 180)
+    var secondsLeft by remember(settings.timerEnabled, timerMax, roundIndex) {
+        mutableStateOf(if (settings.timerEnabled) timerMax else 0)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colors.background)
-            .focusRequester(focusRequester)
-            .focusable()
-            .onPreviewKeyEvent { event ->
-                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+    // Dialog fin de ronda/serie
+    var showEndDialog by remember { mutableStateOf(false) }
+    var endTitle by remember { mutableStateOf("") }
+    var endText by remember { mutableStateOf("") }
+    var endIsSeriesEnd by remember { mutableStateOf(false) }
 
-                when (event.key) {
-                    Key.Enter -> {
-                        controller.onEnter()
-                        true
-                    }
-                    Key.Backspace, Key.Delete -> {
-                        controller.onBackspace()
-                        true
-                    }
-                    else -> {
-                        val ch = event.utf16CodePoint.toCharOrNull()
-                        if (ch != null) {
-                            val up = ch.uppercaseChar()
-                            if ((up in 'A'..'Z') || up == 'Ñ') {
-                                controller.onLetter(up)
-                                true
-                            } else false
-                        } else false
-                    }
-                }
-            }
-            .padding(12.dp)
-    ) {
-        // Barra superior con botones
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedButton(onClick = onBackToMenu) { Text("Menú") }
+    // Foco teclado físico
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
-            OutlinedButton(
-                onClick = {
-                    controller.newGame(
-                        wordLength = settings.wordLength,
-                        maxAttempts = settings.maxAttempts,
-                        resourcePath = "words_es_${settings.wordLength}.txt"
-                    )
-                    focusRequester.requestFocus()
-                }
-            ) { Text("Nueva partida") }
+    // Cuenta atrás (solo si se está jugando y NO hay diálogo)
+    LaunchedEffect(settings.timerEnabled, timerMax, roundIndex, controller.state.status, showEndDialog) {
+        if (!settings.timerEnabled) return@LaunchedEffect
+        if (showEndDialog) return@LaunchedEffect
+        if (controller.state.status != GameState.Status.Playing) return@LaunchedEffect
+
+        while (secondsLeft > 0 && controller.state.status == GameState.Status.Playing && !showEndDialog) {
+            delay(1000)
+            secondsLeft -= 1
         }
 
-        Spacer(Modifier.height(12.dp))
+        if (secondsLeft <= 0 && controller.state.status == GameState.Status.Playing) {
+            controller.forceLoseByTimeout()
+        }
+    }
 
-        // Tablero + mensaje + teclado en pantalla
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Board(
-                rows = state.rows,
-                cols = state.cols,
-                letters = state.letters,
-                states = state.states
-            )
+    // Cuando termina una ronda, mostramos diálogo (NO auto-advance)
+    LaunchedEffect(controller.state.status) {
+        val st = controller.state.status
+        if (st == GameState.Status.Won || st == GameState.Status.Lost) {
+            val won = st == GameState.Status.Won
+            val nextRound = roundIndex + 1
+            val seriesEnd = nextRound > bestOf
 
-            state.message?.let { msg ->
-                Text(
-                    text = msg,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    color = MaterialTheme.colors.onBackground
+            // Actualiza marcador SOLO una vez por fin de ronda
+            if (won) wins += 1 else losses += 1
+
+            endTitle = if (won) "✅ Ronda ganada" else "❌ Ronda perdida"
+            endText = buildString {
+                append("La palabra era: ${controller.solution}\n")
+                if (bestOf > 1) append("Marcador: $wins - $losses\n")
+                append(
+                    if (seriesEnd) "Serie terminada."
+                    else "¿Pasar a la siguiente ronda?"
                 )
             }
+            endIsSeriesEnd = seriesEnd
+            showEndDialog = true
+        }
+    }
 
-            Keyboard(
-                onKey = controller::onLetter,
-                onEnter = controller::onEnter,
-                onBackspace = controller::onBackspace
+    // UI + Fondo + Foco click
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp)
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                ) { focusRequester.requestFocus() }
+                .focusRequester(focusRequester)
+                .focusable()
+                .onPreviewKeyEvent { event ->
+                    // Si hay diálogo, bloquea teclado
+                    if (showEndDialog) return@onPreviewKeyEvent true
+
+                    if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                    when (event.key) {
+                        Key.Enter -> { controller.onEnter(); true }
+                        Key.Backspace, Key.Delete -> { controller.onBackspace(); true }
+                        else -> {
+                            val ch = event.utf16CodePoint.toCharOrNull() ?: return@onPreviewKeyEvent false
+                            val up = ch.uppercaseChar()
+                            if ((up in 'A'..'Z') || up == 'Ñ') { controller.onLetter(up); true } else false
+                        }
+                    }
+                }
+        ) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                OutlinedButton(onClick = onBackToMenu) { Text("Menú") }
+
+                OutlinedButton(
+                    onClick = {
+                        roundIndex = 1
+                        wins = 0
+                        losses = 0
+                        showEndDialog = false
+                        controller.newGame(
+                            wordLength = settings.wordLength,
+                            maxAttempts = settings.maxAttempts,
+                            difficulty = settings.difficulty
+                        )
+                        if (settings.timerEnabled) secondsLeft = timerMax
+                        focusRequester.requestFocus()
+                    }
+                ) { Text("Reiniciar") }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                val roundsText =
+                    if (bestOf == 1) "Ronda: 1/1"
+                    else "Ronda: $roundIndex/$bestOf  (W:$wins L:$losses)"
+                Text(roundsText)
+
+                if (settings.timerEnabled) Text("⏱ ${formatSeconds(secondsLeft)}")
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            GameContent(controller = controller)
+        }
+
+        if (showEndDialog) {
+            AlertDialog(
+                onDismissRequest = { /* no cerrar click fuera */ },
+                title = { Text(endTitle) },
+                text = { Text(endText) },
+                confirmButton = {
+                    Button(onClick = {
+                        showEndDialog = false
+
+                        if (endIsSeriesEnd) {
+                            // Serie terminada: vuelve al menú (o podrías dejar “Reiniciar”)
+                            onBackToMenu()
+                        } else {
+                            roundIndex += 1
+                            controller.newGame(
+                                wordLength = settings.wordLength,
+                                maxAttempts = settings.maxAttempts,
+                                difficulty = settings.difficulty
+                            )
+                            if (settings.timerEnabled) secondsLeft = timerMax
+                            focusRequester.requestFocus()
+                        }
+                    }) {
+                        Text(if (endIsSeriesEnd) "Terminar" else "Siguiente ronda")
+                    }
+                },
+                dismissButton = {
+                    OutlinedButton(onClick = {
+                        // Solo permitir “volver” si aún no acabó la serie
+                        showEndDialog = false
+                        focusRequester.requestFocus()
+                    }) { Text("Cerrar") }
+                }
             )
         }
     }
 }
 
-/**
- * Convierte utf16CodePoint en Char si existe.
- * En Compose Desktop, cuando no hay carácter "real" (teclas especiales), puede venir null/0.
- */
 private fun Int.toCharOrNull(): Char? {
     if (this == 0) return null
     return try {
@@ -133,4 +200,11 @@ private fun Int.toCharOrNull(): Char? {
     } catch (_: IllegalArgumentException) {
         null
     }
+}
+
+private fun formatSeconds(total: Int): String {
+    val t = total.coerceAtLeast(0)
+    val m = t / 60
+    val s = t % 60
+    return "%d:%02d".format(m, s)
 }

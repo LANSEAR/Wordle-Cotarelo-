@@ -7,6 +7,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.cotarelo.wordle.client.settings.AppSettings
+import com.cotarelo.wordle.client.settings.Difficulty
 
 @Composable
 fun SettingsScreen(
@@ -32,13 +33,27 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        SettingRoundsBestOf(
+            value = settings.roundsBestOf,
+            onChange = { onChangeSettings(settings.copy(roundsBestOf = it)) }
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        SettingDifficulty(
+            value = settings.difficulty,
+            onChange = { onChangeSettings(settings.copy(difficulty = it)) }
+        )
+
+        Spacer(Modifier.height(16.dp))
+
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(
                 checked = settings.timerEnabled,
                 onCheckedChange = { onChangeSettings(settings.copy(timerEnabled = it)) }
             )
             Spacer(Modifier.width(8.dp))
-            Text("Temporizador por partida")
+            Text("Tiempo por palabra (opcional)")
         }
 
         if (settings.timerEnabled) {
@@ -46,6 +61,10 @@ fun SettingsScreen(
             TimerSecondsSelector(
                 value = settings.timerSeconds,
                 onChange = { onChangeSettings(settings.copy(timerSeconds = it)) }
+            )
+            Text(
+                text = "Máximo 3 minutos",
+                style = MaterialTheme.typography.caption
             )
         }
 
@@ -68,12 +87,7 @@ private fun SettingWordLength(value: Int, onChange: (Int) -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text("Longitud palabra", modifier = Modifier.weight(1f))
-        Stepper(
-            value = value,
-            min = 4,
-            max = 7,
-            onChange = onChange
-        )
+        Stepper(value = value, min = 4, max = 7, onChange = onChange)
     }
 }
 
@@ -84,11 +98,73 @@ private fun SettingMaxAttempts(value: Int, onChange: (Int) -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text("Intentos máximos", modifier = Modifier.weight(1f))
-        Stepper(
-            value = value,
-            min = 4,
-            max = 10,
-            onChange = onChange
+        Stepper(value = value, min = 4, max = 10, onChange = onChange)
+    }
+}
+
+@Composable
+private fun SettingRoundsBestOf(value: Int, onChange: (Int) -> Unit) {
+    Column {
+        Text("Rondas", style = MaterialTheme.typography.subtitle1)
+        Spacer(Modifier.height(8.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(1, 3, 5, 7).forEach { bo ->
+                val selected = value == bo
+                Button(
+                    onClick = { onChange(bo) },
+                    colors = if (selected) ButtonDefaults.buttonColors()
+                    else ButtonDefaults.outlinedButtonColors(),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Text(if (bo == 1) "1" else "BO$bo")
+                }
+            }
+        }
+
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = if (value == 1) "Sin rondas (una palabra por partida)"
+            else "Mejor de $value palabras",
+            style = MaterialTheme.typography.caption
+        )
+    }
+}
+
+@Composable
+private fun SettingDifficulty(value: Difficulty, onChange: (Difficulty) -> Unit) {
+    Column {
+        Text("Dificultad (selección de palabra)", style = MaterialTheme.typography.subtitle1)
+        Spacer(Modifier.height(8.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Difficulty.values().forEach { d ->
+                val selected = value == d
+                Button(
+                    onClick = { onChange(d) },
+                    colors = if (selected) ButtonDefaults.buttonColors()
+                    else ButtonDefaults.outlinedButtonColors(),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        when (d) {
+                            Difficulty.EASY -> "Fácil"
+                            Difficulty.NORMAL -> "Media"
+                            Difficulty.HARD -> "Difícil"
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = when (value) {
+                Difficulty.EASY -> "Palabras comunes"
+                Difficulty.NORMAL -> "Comunes (por ahora)"
+                Difficulty.HARD -> "Palabras raras"
+            },
+            style = MaterialTheme.typography.caption
         )
     }
 }
@@ -96,10 +172,12 @@ private fun SettingMaxAttempts(value: Int, onChange: (Int) -> Unit) {
 @Composable
 private fun TimerSecondsSelector(value: Int, onChange: (Int) -> Unit) {
     Column {
-        Text("Tiempo (segundos): $value", style = MaterialTheme.typography.body2)
+        Text("Tiempo máximo: $value s", style = MaterialTheme.typography.body2)
         Spacer(Modifier.height(8.dp))
+
+        // Máximo 180 (3 min) según requisitos
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(60, 120, 180, 300).forEach { option ->
+            listOf(60, 120, 180).forEach { option ->
                 val selected = option == value
                 Button(
                     onClick = { onChange(option) },
