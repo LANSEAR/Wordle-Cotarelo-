@@ -1,0 +1,20 @@
+{
+  "players": {
+    "Demo": {
+      "gamesWon": 5,
+      "gamesLost": 2,
+      "totalGames": 7,
+      "currentStreak": 2,
+      "maxStreak": 4,
+      "averageAttempts": 4.2,
+      "attemptsDistribution": {
+        "3": 1,
+        "4": 3,
+        "5": 2,
+        "6": 1
+      },
+      "wordsGuessed": 15,
+      "totalWords": 18
+    }
+  }
+}

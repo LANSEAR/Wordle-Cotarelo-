@@ -17,6 +17,7 @@ fun MenuScreen(
     settings: AppSettings,
     onToggleTheme: () -> Unit,
     onStartSinglePlayer: () -> Unit,
+    onStartPVE: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenRecords: () -> Unit,
     onExit: () -> Unit
@@ -70,7 +71,14 @@ fun MenuScreen(
                 Button(
                     onClick = onStartSinglePlayer,
                     modifier = Modifier.fillMaxWidth().height(48.dp)
-                ) { Text("Nueva partida (1 jugador)") }
+                ) { Text("Nueva partida (Local)") }
+
+                Spacer(Modifier.height(12.dp))
+
+                Button(
+                    onClick = onStartPVE,
+                    modifier = Modifier.fillMaxWidth().height(48.dp)
+                ) { Text("Nueva partida PVE (vs IA)") }
 
                 Spacer(Modifier.height(12.dp))
 

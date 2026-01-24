@@ -17,6 +17,7 @@ dependencies {
     implementation(compose.material)
 
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.swing) // Para Dispatchers.Main en Desktop
     implementation(libs.kotlinx.serialization.json)
     implementation(compose.materialIconsExtended) // 👈 ESTA ES LA CLAVE
 }

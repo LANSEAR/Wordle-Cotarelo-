@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import com.cotarelo.wordle.client.settings.SettingsRepository
 import com.cotarelo.wordle.client.settings.ThemeMode
 import com.cotarelo.wordle.client.ui.screens.GameScreen
+import com.cotarelo.wordle.client.ui.screens.GamePVEScreen
 import com.cotarelo.wordle.client.ui.screens.MenuScreen
 import com.cotarelo.wordle.client.ui.screens.RecordsScreen
 import com.cotarelo.wordle.client.ui.screens.SettingsScreen
@@ -37,12 +38,18 @@ fun AppRoot(
                 settings = settings,
                 onToggleTheme = { toggleTheme() },
                 onStartSinglePlayer = { screen = Screen.Game },
+                onStartPVE = { screen = Screen.GamePVE },
                 onOpenSettings = { screen = Screen.Settings },
                 onOpenRecords = { screen = Screen.Records },
                 onExit = onExitRequest
             )
 
             Screen.Game -> GameScreen(
+                settings = settings,
+                onBackToMenu = { screen = Screen.Menu }
+            )
+
+            Screen.GamePVE -> GamePVEScreen(
                 settings = settings,
                 onBackToMenu = { screen = Screen.Menu }
             )
