@@ -22,7 +22,8 @@ import androidx.compose.material.Text
 fun Keyboard(
     onKey: (Char) -> Unit,
     onEnter: () -> Unit,
-    onBackspace: () -> Unit
+    onBackspace: () -> Unit,
+    enabled: Boolean
 ) {
     val row1 = "QWERTYUIOP".toList()
     val row2 = "ASDFGHJKLÑ".toList()

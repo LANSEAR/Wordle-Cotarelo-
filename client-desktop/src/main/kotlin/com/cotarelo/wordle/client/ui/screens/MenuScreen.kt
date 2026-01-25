@@ -18,6 +18,7 @@ fun MenuScreen(
     onToggleTheme: () -> Unit,
     onStartSinglePlayer: () -> Unit,
     onStartPVE: () -> Unit,
+    onStartPVP: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenRecords: () -> Unit,
     onExit: () -> Unit
@@ -79,6 +80,13 @@ fun MenuScreen(
                     onClick = onStartPVE,
                     modifier = Modifier.fillMaxWidth().height(48.dp)
                 ) { Text("Nueva partida PVE (vs IA)") }
+
+                Spacer(Modifier.height(12.dp))
+
+                Button(
+                    onClick = onStartPVP,
+                    modifier = Modifier.fillMaxWidth().height(48.dp)
+                ) { Text("Nueva partida PVP (Online)") }
 
                 Spacer(Modifier.height(12.dp))
 

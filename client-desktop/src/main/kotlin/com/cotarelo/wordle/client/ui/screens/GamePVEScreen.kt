@@ -165,7 +165,9 @@ fun GamePVEScreen(
                 cols = controller.state.cols,
                 letters = controller.state.letters,
                 states = controller.state.states,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                currentRow = controller.state.currentRow,
+                currentCol = controller.state.currentCol
             )
 
             // Mensaje
@@ -184,7 +186,8 @@ fun GamePVEScreen(
             Keyboard(
                 onKey = { ch -> controller.onLetter(ch) },
                 onEnter = { controller.onEnter() },
-                onBackspace = { controller.onBackspace() }
+                onBackspace = { controller.onBackspace() },
+                enabled = true
             )
         }
 

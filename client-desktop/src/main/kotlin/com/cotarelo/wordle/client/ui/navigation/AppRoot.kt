@@ -6,8 +6,11 @@ import androidx.compose.material.lightColors
 import androidx.compose.runtime.*
 import com.cotarelo.wordle.client.settings.SettingsRepository
 import com.cotarelo.wordle.client.settings.ThemeMode
+import com.cotarelo.wordle.client.network.PVPServerConnection
 import com.cotarelo.wordle.client.ui.screens.GameScreen
 import com.cotarelo.wordle.client.ui.screens.GamePVEScreen
+import com.cotarelo.wordle.client.ui.screens.GamePVPScreen
+import com.cotarelo.wordle.client.ui.screens.LobbyScreen
 import com.cotarelo.wordle.client.ui.screens.MenuScreen
 import com.cotarelo.wordle.client.ui.screens.RecordsScreen
 import com.cotarelo.wordle.client.ui.screens.SettingsScreen
@@ -19,6 +22,7 @@ fun AppRoot(
     val repo = remember { SettingsRepository() }
     var settings by remember { mutableStateOf(repo.load()) }
     var screen by remember { mutableStateOf<Screen>(Screen.Menu) }
+    var pvpConnection by remember { mutableStateOf<PVPServerConnection?>(null) }
 
     val colors = when (settings.themeMode) {
         ThemeMode.DARK -> darkColors()
@@ -39,6 +43,7 @@ fun AppRoot(
                 onToggleTheme = { toggleTheme() },
                 onStartSinglePlayer = { screen = Screen.Game },
                 onStartPVE = { screen = Screen.GamePVE },
+                onStartPVP = { screen = Screen.Lobby },
                 onOpenSettings = { screen = Screen.Settings },
                 onOpenRecords = { screen = Screen.Records },
                 onExit = onExitRequest
@@ -64,6 +69,38 @@ fun AppRoot(
             )
 
             Screen.Records -> RecordsScreen(onBack = { screen = Screen.Menu })
+
+            Screen.Lobby -> LobbyScreen(
+                settings = settings,
+                onBackToMenu = { screen = Screen.Menu },
+                onGameStart = { roomId, opponentName, wordLength, maxAttempts, rounds, difficulty, connection ->
+                    pvpConnection = connection
+                    screen = Screen.GamePVP(roomId, opponentName, wordLength, maxAttempts, rounds, difficulty)
+                }
+            )
+
+            is Screen.GamePVP -> {
+                val gamePVPScreen = screen as Screen.GamePVP
+                pvpConnection?.let { connection ->
+                    GamePVPScreen(
+                        roomId = gamePVPScreen.roomId,
+                        opponentName = gamePVPScreen.opponentName,
+                        wordLength = gamePVPScreen.wordLength,
+                        maxAttempts = gamePVPScreen.maxAttempts,
+                        rounds = gamePVPScreen.rounds,
+                        difficulty = gamePVPScreen.difficulty,
+                        connection = connection,
+                        onBackToMenu = {
+                            pvpConnection = null
+                            screen = Screen.Menu
+                        },
+                        onRematch = {
+                            pvpConnection = null
+                            screen = Screen.Lobby
+                        }
+                    )
+                }
+            }
         }
     }
 }

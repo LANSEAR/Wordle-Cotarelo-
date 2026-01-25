@@ -31,7 +31,9 @@ fun GameContent(
             cols = state.cols,
             letters = state.letters,
             states = state.states,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            currentRow = state.currentRow,
+            currentCol = state.currentCol
         )
 
         Spacer(Modifier.height(16.dp))
@@ -40,7 +42,8 @@ fun GameContent(
         Keyboard(
             onKey = { ch -> controller.onLetter(ch) },
             onEnter = { controller.onEnter() },
-            onBackspace = { controller.onBackspace() }
+            onBackspace = { controller.onBackspace() },
+            enabled = true
         )
     }
 }

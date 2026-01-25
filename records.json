@@ -10,6 +10,41 @@
             },
             "wordsGuessed": 3,
             "totalWords": 2
+        },
+        "LANSEAR": {
+            "gamesLost": 4,
+            "totalGames": 4,
+            "attemptsDistribution": {
+                "0": 4
+            }
+        },
+        "Jugador2171": {
+            "gamesLost": 1,
+            "totalGames": 1,
+            "attemptsDistribution": {
+                "0": 1
+            }
+        },
+        "Jugador2248": {
+            "gamesLost": 1,
+            "totalGames": 1,
+            "attemptsDistribution": {
+                "0": 1
+            }
+        },
+        "Jugador8523": {
+            "gamesLost": 1,
+            "totalGames": 1,
+            "attemptsDistribution": {
+                "0": 1
+            }
+        },
+        "Jugador6996": {
+            "gamesLost": 1,
+            "totalGames": 1,
+            "attemptsDistribution": {
+                "0": 1
+            }
         }
     }
 }

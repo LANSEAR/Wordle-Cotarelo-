@@ -15,7 +15,9 @@ fun Board(
     cols: Int,
     letters: List<List<Char>>,
     states: List<List<TileState>>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    currentRow: Int,
+    currentCol: Int
 ) {
     Column(
         modifier = modifier,

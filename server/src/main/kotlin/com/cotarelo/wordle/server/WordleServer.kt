@@ -2,7 +2,7 @@ package com.cotarelo.wordle.server
 
 import com.cotarelo.wordle.server.config.ServerConfig
 import com.cotarelo.wordle.server.data.RecordsManager
-import com.cotarelo.wordle.server.network.SimpleClientHandler
+import com.cotarelo.wordle.server.network.PVPClientHandler
 import kotlinx.coroutines.*
 import java.net.ServerSocket
 import java.net.SocketException
@@ -52,7 +52,7 @@ class WordleServer(private val config: ServerConfig) {
                     }
 
                     val clientId = clientCounter.incrementAndGet()
-                    val handler = SimpleClientHandler(clientSocket, recordsManager, clientId)
+                    val handler = PVPClientHandler(clientSocket, recordsManager, clientId)
 
                     // Lanzar handler en una corrutina
                     val job = launch(Dispatchers.IO) {
