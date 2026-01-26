@@ -33,6 +33,7 @@ fun GamePVEScreen(
                 Difficulty.EASY -> "EASY"
                 Difficulty.NORMAL -> "NORMAL"
                 Difficulty.HARD -> "HARD"
+                Difficulty.MIXTA -> "MIXTA"
             }
         )
     }

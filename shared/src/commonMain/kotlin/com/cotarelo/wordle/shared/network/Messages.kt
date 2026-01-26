@@ -136,7 +136,8 @@ enum class GameMode {
 enum class Difficulty {
     EASY,
     NORMAL,
-    HARD
+    HARD,
+    MIXTA
 }
 
 @Serializable

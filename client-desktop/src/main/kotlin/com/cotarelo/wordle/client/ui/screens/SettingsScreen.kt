@@ -147,6 +147,7 @@ private fun SettingDifficulty(value: Difficulty, onChange: (Difficulty) -> Unit)
                             Difficulty.EASY -> "Fácil"
                             Difficulty.NORMAL -> "Media"
                             Difficulty.HARD -> "Difícil"
+                            Difficulty.MIXTA -> "Mixta"
                         }
                     )
                 }
@@ -156,9 +157,10 @@ private fun SettingDifficulty(value: Difficulty, onChange: (Difficulty) -> Unit)
         Spacer(Modifier.height(6.dp))
         Text(
             text = when (value) {
-                Difficulty.EASY -> "Palabras comunes"
-                Difficulty.NORMAL -> "Comunes (mezcla ligera)"
-                Difficulty.HARD -> "Palabras raras"
+                Difficulty.EASY -> "Palabras muy comunes del día a día"
+                Difficulty.NORMAL -> "Palabras comunes pero menos frecuentes"
+                Difficulty.HARD -> "Palabras poco comunes o técnicas"
+                Difficulty.MIXTA -> "Todas las categorías mezcladas"
             },
             style = MaterialTheme.typography.caption
         )

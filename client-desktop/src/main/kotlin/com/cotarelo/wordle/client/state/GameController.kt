@@ -141,29 +141,27 @@ class GameController(
     private fun reloadDictionaries() {
         val wl = wordLength.coerceIn(4, 7)
 
-        val commonPath = "words_es_${wl}_common.txt"
-        val rarePath = "words_es_${wl}_rare.txt"
+        // Usar WordRepository directamente en lugar de archivos
+        val easyWords = WordRepository.getWords(wl, "EASY")
+        val mediumWords = WordRepository.getWords(wl, "NORMAL")
+        val hardWords = WordRepository.getWords(wl, "HARD")
 
-        commonList = WordRepository.loadWordsFromResource(commonPath, length = wl)
-        rareList = WordRepository.loadWordsFromResource(rarePath, length = wl)
+        // Para compatibilidad, mantener commonList y rareList
+        commonList = easyWords
+        rareList = hardWords
 
-        allowedSet = (commonList + rareList).toHashSet()
+        // Permitir todas las palabras independientemente de la dificultad
+        allowedSet = WordRepository.getWords(wl, "MIXTA").toHashSet()
 
         secretList = when (difficulty) {
-            Difficulty.EASY -> commonList.ifEmpty { rareList }
-            Difficulty.HARD -> rareList.ifEmpty { commonList }
-            Difficulty.NORMAL -> mixCommonRare(commonList, rareList, commonWeight = 0.7)
-        }
-
-        if (allowedSet.isEmpty() && secretList.isNotEmpty()) {
-            allowedSet = secretList.toHashSet()
+            Difficulty.EASY -> easyWords
+            Difficulty.NORMAL -> mediumWords
+            Difficulty.HARD -> hardWords
+            Difficulty.MIXTA -> allowedSet.toList()
         }
 
         if (secretList.isEmpty()) {
-            error(
-                "Diccionarios vacíos para longitud $wl.\n" +
-                        "Revisa resources: $commonPath y $rarePath (palabras de $wl letras)."
-            )
+            error("Diccionarios vacíos para longitud $wl y dificultad $difficulty.")
         }
     }
 

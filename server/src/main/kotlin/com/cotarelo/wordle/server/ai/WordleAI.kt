@@ -25,6 +25,7 @@ class WordleAI(
             Difficulty.EASY -> getEasyGuess()
             Difficulty.NORMAL -> getNormalGuess()
             Difficulty.HARD -> getHardGuess()
+            Difficulty.MIXTA -> getNormalGuess() // MIXTA usa estrategia normal
         }
     }
 

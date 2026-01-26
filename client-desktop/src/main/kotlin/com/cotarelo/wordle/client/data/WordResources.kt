@@ -9,6 +9,7 @@ object WordResources {
             Difficulty.EASY -> "words_es_${wl}_common.txt"
             Difficulty.NORMAL -> "words_es_${wl}_common.txt" // puedes mezclar luego
             Difficulty.HARD -> "words_es_${wl}_rare.txt"
+            Difficulty.MIXTA -> "words_es_${wl}_common.txt" // MIXTA se maneja en WordRepository
         }
     }
 
