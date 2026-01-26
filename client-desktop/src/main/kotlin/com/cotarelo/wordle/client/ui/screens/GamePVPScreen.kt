@@ -219,13 +219,38 @@ fun GamePVPScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Botón volver (solo visible si el juego terminó)
-            if (controller.gameWinner != null || controller.opponentDisconnected) {
-                OutlinedButton(
-                    onClick = onBackToMenu,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("← Volver al Menú")
+            // Botones de acción
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Botón salir de la sala (visible durante la partida)
+                if (controller.gameWinner == null && !controller.opponentDisconnected) {
+                    val scope = rememberCoroutineScope()
+                    OutlinedButton(
+                        onClick = {
+                            scope.launch {
+                                connection.leaveRoom()
+                                onBackToMenu()
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colors.error
+                        )
+                    ) {
+                        Text("Abandonar Sala")
+                    }
+                }
+
+                // Botón volver (solo visible si el juego terminó)
+                if (controller.gameWinner != null || controller.opponentDisconnected) {
+                    OutlinedButton(
+                        onClick = onBackToMenu,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("← Volver al Menú")
+                    }
                 }
             }
         }

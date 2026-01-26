@@ -357,14 +357,44 @@ class PVPClientHandler(
     }
 
     private suspend fun handleLeaveRoom() {
-        val room = RoomManager.removePlayer(clientId)
+        // Obtener información de la sala ANTES de remover al jugador
+        val room = RoomManager.getPlayerRoom(clientId)
         if (room != null) {
-            // Notificar al oponente
             val opponentId = if (room.player1Id == clientId) room.player2Id else room.player1Id
+            val leavingPlayerName = if (room.player1Id == clientId) room.player1Name else room.player2Name
+            val gameWasStarted = room.gameStarted
+            val gameWasOver = room.isGameOver()
+
+            // Guardar información del juego antes de remover
+            val player1Name = room.player1Name
+            val player2Name = room.player2Name
+            val currentGameState = if (gameWasStarted) room.getGameWinner() else null
+
+            // Ahora sí remover al jugador
+            RoomManager.removePlayer(clientId)
+
             if (opponentId != null) {
-                val opponentName = if (room.player1Id == clientId) room.player1Name else room.player2Name
-                val response = OpponentDisconnectedResponse(opponentName ?: "Oponente")
-                sendToClient(opponentId, "OPPONENT_DISCONNECTED", json.encodeToString(response))
+                // Si el juego ha comenzado y no ha terminado, declarar victoria automática para el oponente
+                if (gameWasStarted && !gameWasOver) {
+                    // El jugador que abandonó pierde, el que se queda gana
+                    val winner = if (room.player1Id == clientId) "PLAYER2" else "PLAYER1"
+
+                    // Crear respuesta con el jugador restante como ganador absoluto
+                    val gameWinnerResponse = GameWinnerPVPResponse(
+                        winner = winner,
+                        player1Rounds = currentGameState?.player1Rounds ?: 0,
+                        player2Rounds = currentGameState?.player2Rounds ?: 0,
+                        player1Name = player1Name ?: "Jugador 1",
+                        player2Name = player2Name ?: "Jugador 2",
+                        youWon = true // El jugador que recibe este mensaje siempre gana
+                    )
+                    sendToClient(opponentId, "GAME_WINNER_PVP", json.encodeToString(gameWinnerResponse))
+                    println("🏆 Victoria por abandono para jugador #$opponentId en sala ${room.roomId}")
+                } else {
+                    // Solo notificar desconexión si el juego no había empezado o ya terminó
+                    val response = OpponentDisconnectedResponse(leavingPlayerName ?: "Oponente")
+                    sendToClient(opponentId, "OPPONENT_DISCONNECTED", json.encodeToString(response))
+                }
             }
         }
     }
