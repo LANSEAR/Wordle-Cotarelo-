@@ -221,6 +221,11 @@ class SimpleOnlineGameController(
                 println("❌ Error del servidor: ${response.data.message}")
             }
 
+            is ServerResponse.RecordsData -> {
+                println("📊 Records recibidos")
+                // No hacemos nada con los records en este controlador
+            }
+
             is ServerResponse.Unknown -> {
                 println("⚠️  Tipo de mensaje desconocido: ${response.type}")
             }

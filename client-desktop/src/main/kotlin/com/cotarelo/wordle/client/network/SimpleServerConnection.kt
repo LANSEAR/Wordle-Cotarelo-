@@ -13,19 +13,6 @@ import java.io.OutputStreamWriter
 import java.net.Socket
 
 /**
- * Respuestas del servidor (sealed class para el cliente)
- */
-sealed class ServerResponse {
-    data class GameStarted(val data: GameStartedResponse) : ServerResponse()
-    data class GuessResult(val data: GuessResultResponse) : ServerResponse()
-    data class AIMove(val data: AIMoveResponse) : ServerResponse()
-    data class RoundWinner(val data: RoundWinnerResponse) : ServerResponse()
-    data class GameWinner(val data: GameWinnerResponse) : ServerResponse()
-    data class Error(val data: ErrorResponse) : ServerResponse()
-    data class Unknown(val type: String) : ServerResponse()
-}
-
-/**
  * Cliente de conexión al servidor Wordle (protocolo simple)
  */
 class SimpleServerConnection(

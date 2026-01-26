@@ -63,6 +63,11 @@ data class ErrorResponse(
     val message: String
 )
 
+@Serializable
+data class RecordsDataResponse(
+    val records: Records
+)
+
 // ═══════════════════════════════════════════════════════════
 // MENSAJES PVP
 // ═══════════════════════════════════════════════════════════

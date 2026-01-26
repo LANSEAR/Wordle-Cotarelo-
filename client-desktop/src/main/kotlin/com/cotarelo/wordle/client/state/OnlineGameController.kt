@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.cotarelo.wordle.client.network.ServerConnection
+import com.cotarelo.wordle.client.network.ServerResponse
 import com.cotarelo.wordle.shared.model.TileState
 import com.cotarelo.wordle.shared.network.*
 import com.cotarelo.wordle.shared.network.toModel
@@ -151,22 +152,22 @@ class OnlineGameController(
     /**
      * Maneja mensajes del servidor
      */
-    private fun handleServerMessage(message: ServerMessage) {
-        when (message) {
-            is ServerMessage.GameStarted -> {
-                println("🎮 Partida iniciada: ${message.gameId}")
+    private fun handleServerMessage(response: ServerResponse) {
+        when (response) {
+            is ServerResponse.GameStarted -> {
+                println("🎮 Partida iniciada: ${response.data.gameId}")
                 state = state.copy(message = "¡Partida iniciada!")
             }
 
-            is ServerMessage.GuessResult -> {
-                if (!message.isValid) {
-                    state = state.copy(message = message.message ?: "Palabra no válida")
+            is ServerResponse.GuessResult -> {
+                if (!response.data.isValid) {
+                    state = state.copy(message = response.data.message ?: "Palabra no válida")
                     clearCurrentRow()
                     return
                 }
 
                 val row = state.currentRow
-                val evaluation = message.result.map { it.toModel() }
+                val evaluation = response.data.result.map { parseState(it) }
                 val newStates = state.states.updateRow(row, evaluation)
 
                 val won = evaluation.all { it == TileState.Correct }
@@ -181,7 +182,7 @@ class OnlineGameController(
                         lastRow -> GameState.Status.Lost
                         else -> GameState.Status.Playing
                     },
-                    message = message.message ?: when {
+                    message = response.data.message ?: when {
                         won -> "¡Correcto!"
                         lastRow -> "Sin intentos"
                         else -> null
@@ -189,43 +190,65 @@ class OnlineGameController(
                 )
             }
 
-            is ServerMessage.AIMove -> {
-                lastAIMove = AIMove(message.word, message.attemptNumber, message.result)
-                println("🤖 IA jugó: ${message.word} (intento ${message.attemptNumber})")
+            is ServerResponse.AIMove -> {
+                lastAIMove = AIMove(response.data.word, response.data.attemptNumber, response.data.result.map { parseState(it) }.map { it.toDto() })
+                println("🤖 IA jugó: ${response.data.word} (intento ${response.data.attemptNumber})")
             }
 
-            is ServerMessage.RoundWinner -> {
-                roundWinner = message.winner
-                solution = message.solution
+            is ServerResponse.RoundWinner -> {
+                roundWinner = parseWinner(response.data.winner)
+                solution = response.data.solution
 
-                when (message.winner) {
-                    Winner.PLAYER -> playerRoundsWon++
-                    Winner.AI -> aiRoundsWon++
+                when (response.data.winner) {
+                    "PLAYER" -> playerRoundsWon++
+                    "AI" -> aiRoundsWon++
                     else -> {}
                 }
 
                 state = state.copy(
-                    message = "Ronda terminada. Solución: ${message.solution}",
-                    status = if (message.winner == Winner.PLAYER) GameState.Status.Won else GameState.Status.Lost
+                    message = "Ronda terminada. Solución: ${response.data.solution}",
+                    status = if (response.data.winner == "PLAYER") GameState.Status.Won else GameState.Status.Lost
                 )
 
-                println("🏁 Ronda terminada - Ganador: ${message.winner}")
+                println("🏁 Ronda terminada - Ganador: ${response.data.winner}")
             }
 
-            is ServerMessage.GameWinner -> {
-                gameWinner = message.winner
-                println("🏆 Juego terminado - Ganador: ${message.winner}")
-                println("   Jugador: ${message.playerRounds} | IA: ${message.aiRounds}")
+            is ServerResponse.GameWinner -> {
+                gameWinner = parseWinner(response.data.winner)
+                println("🏆 Juego terminado - Ganador: ${response.data.winner}")
+                println("   Jugador: ${response.data.playerRounds} | IA: ${response.data.aiRounds}")
             }
 
-            is ServerMessage.Error -> {
-                state = state.copy(message = "Error: ${message.message}")
-                println("❌ Error del servidor: ${message.message}")
+            is ServerResponse.Error -> {
+                state = state.copy(message = "Error: ${response.data.message}")
+                println("❌ Error del servidor: ${response.data.message}")
             }
 
-            is ServerMessage.RecordsData -> {
+            is ServerResponse.RecordsData -> {
                 println("📊 Records recibidos del servidor")
             }
+
+            is ServerResponse.Unknown -> {
+                println("⚠️  Tipo de mensaje desconocido: ${response.type}")
+            }
+        }
+    }
+
+    private fun parseState(stateStr: String): TileState {
+        return when (stateStr) {
+            "CORRECT" -> TileState.Correct
+            "PRESENT" -> TileState.Present
+            "ABSENT" -> TileState.Absent
+            else -> TileState.Empty
+        }
+    }
+
+    private fun parseWinner(winnerStr: String): Winner {
+        return when (winnerStr) {
+            "PLAYER" -> Winner.PLAYER
+            "AI" -> Winner.AI
+            "DRAW" -> Winner.DRAW
+            else -> Winner.DRAW
         }
     }
 

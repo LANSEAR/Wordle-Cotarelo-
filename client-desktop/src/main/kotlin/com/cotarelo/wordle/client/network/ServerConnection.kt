@@ -31,7 +31,7 @@ class ServerConnection(
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     // Flow para emitir mensajes recibidos del servidor
-    private val _serverMessages = MutableSharedFlow<ServerMessage>(replay = 0)
+    private val _serverMessages = MutableSharedFlow<ServerResponse>(replay = 0)
     val serverMessages = _serverMessages.asSharedFlow()
 
     var isConnected = false
@@ -66,7 +66,7 @@ class ServerConnection(
     suspend fun disconnect() = withContext(Dispatchers.IO) {
         try {
             if (isConnected) {
-                sendMessage(ClientMessage.Disconnect)
+                sendRawMessage("DISCONNECT", "{}")
                 delay(100) // Dar tiempo para enviar mensaje
             }
         } catch (e: Exception) {
@@ -86,41 +86,40 @@ class ServerConnection(
         maxAttempts: Int,
         difficulty: Difficulty
     ) {
-        sendMessage(
-            ClientMessage.StartGame(
-                mode = mode,
-                rounds = rounds,
-                wordLength = wordLength,
-                maxAttempts = maxAttempts,
-                difficulty = difficulty
-            )
+        val request = StartGameRequest(
+            mode = mode.name,
+            rounds = rounds,
+            wordLength = wordLength,
+            maxAttempts = maxAttempts,
+            difficulty = difficulty.name
         )
+        sendRawMessage("START_GAME", json.encodeToString(request))
     }
 
     /**
      * Envía un intento de palabra
      */
     suspend fun sendGuess(word: String, attemptNumber: Int) {
-        sendMessage(
-            ClientMessage.Guess(
-                word = word,
-                attemptNumber = attemptNumber
-            )
+        val request = GuessRequest(
+            word = word,
+            attemptNumber = attemptNumber
         )
+        sendRawMessage("GUESS", json.encodeToString(request))
     }
 
     /**
      * Solicita sincronización de records
      */
     suspend fun syncRecords() {
-        sendMessage(ClientMessage.SyncRecords)
+        sendRawMessage("SYNC_RECORDS", "{}")
     }
 
     /**
-     * Envía un mensaje al servidor
+     * Envía un mensaje con formato Message(type, data)
      */
-    private suspend fun sendMessage(message: ClientMessage) = withContext(Dispatchers.IO) {
+    private suspend fun sendRawMessage(type: String, data: String) = withContext(Dispatchers.IO) {
         try {
+            val message = Message(type, data)
             val jsonText = json.encodeToString(message)
             writer?.write(jsonText)
             writer?.newLine()
@@ -146,16 +145,59 @@ class ServerConnection(
                     }
 
                     try {
-                        val message = json.decodeFromString<ServerMessage>(line)
-                        _serverMessages.emit(message)
+                        println("📥 Recibido PVE: $line")
+                        val message = json.decodeFromString<Message>(line)
+                        val response = parseResponse(message)
+                        _serverMessages.emit(response)
                     } catch (e: Exception) {
                         println("⚠️  Error deserializando mensaje: ${e.message}")
+                        e.printStackTrace()
                     }
                 }
             } catch (e: Exception) {
                 println("❌ Error en escucha de mensajes: ${e.message}")
                 isConnected = false
             }
+        }
+    }
+
+    private fun parseResponse(message: Message): ServerResponse {
+        return try {
+            when (message.type) {
+                "GAME_STARTED" -> {
+                    val data = json.decodeFromString<GameStartedResponse>(message.data)
+                    ServerResponse.GameStarted(data)
+                }
+                "GUESS_RESULT" -> {
+                    val data = json.decodeFromString<GuessResultResponse>(message.data)
+                    ServerResponse.GuessResult(data)
+                }
+                "AI_MOVE" -> {
+                    val data = json.decodeFromString<AIMoveResponse>(message.data)
+                    ServerResponse.AIMove(data)
+                }
+                "ROUND_WINNER" -> {
+                    val data = json.decodeFromString<RoundWinnerResponse>(message.data)
+                    ServerResponse.RoundWinner(data)
+                }
+                "GAME_WINNER" -> {
+                    val data = json.decodeFromString<GameWinnerResponse>(message.data)
+                    ServerResponse.GameWinner(data)
+                }
+                "RECORDS_DATA" -> {
+                    val data = json.decodeFromString<RecordsDataResponse>(message.data)
+                    ServerResponse.RecordsData(data)
+                }
+                "ERROR" -> {
+                    val data = json.decodeFromString<ErrorResponse>(message.data)
+                    ServerResponse.Error(data)
+                }
+                else -> ServerResponse.Unknown(message.type)
+            }
+        } catch (e: Exception) {
+            println("Error parseando respuesta ${message.type}: ${e.message}")
+            e.printStackTrace()
+            ServerResponse.Error(ErrorResponse("Error parseando respuesta: ${e.message}"))
         }
     }
 

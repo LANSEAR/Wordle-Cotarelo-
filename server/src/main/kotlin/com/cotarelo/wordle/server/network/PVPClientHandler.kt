@@ -1,6 +1,7 @@
 package com.cotarelo.wordle.server.network
 
 import com.cotarelo.wordle.server.data.RecordsManager
+import com.cotarelo.wordle.server.game.GameSession
 import com.cotarelo.wordle.server.game.RoomManager
 import com.cotarelo.wordle.shared.model.TileState
 import com.cotarelo.wordle.shared.network.*
@@ -32,6 +33,10 @@ class PVPClientHandler(
     private val writer = BufferedWriter(OutputStreamWriter(clientSocket.getOutputStream()))
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    // Para modo PVE
+    private var currentGame: GameSession? = null
+    private var playerName: String = "Player$clientId"
 
     // Registro estático de todos los handlers activos para notificaciones
     companion object {
@@ -103,6 +108,18 @@ class PVPClientHandler(
             }
             "DISCONNECT" -> {
                 clientSocket.close()
+            }
+            // Mensajes PVE (modo VS IA)
+            "START_GAME" -> {
+                val request = json.decodeFromString<StartGameRequest>(message.data)
+                handleStartGamePVE(request)
+            }
+            "GUESS" -> {
+                val request = json.decodeFromString<GuessRequest>(message.data)
+                handleGuessPVE(request)
+            }
+            "SYNC_RECORDS" -> {
+                handleSyncRecords()
             }
             else -> {
                 sendError("Tipo de mensaje desconocido: ${message.type}")
@@ -392,5 +409,126 @@ class PVPClientHandler(
             TileState.Present -> "PRESENT"
             TileState.Correct -> "CORRECT"
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // MÉTODOS PARA MODO PVE (VS IA)
+    // ═══════════════════════════════════════════════════════════
+
+    private suspend fun handleStartGamePVE(request: StartGameRequest) {
+        println("🎮 Cliente #$clientId inicia partida PVE ${request.difficulty}")
+
+        val mode = when (request.mode) {
+            "PVE" -> GameMode.PVE
+            "PVP" -> GameMode.PVP
+            else -> GameMode.PVE
+        }
+
+        val difficulty = when (request.difficulty) {
+            "EASY" -> Difficulty.EASY
+            "NORMAL" -> Difficulty.NORMAL
+            "HARD" -> Difficulty.HARD
+            else -> Difficulty.NORMAL
+        }
+
+        currentGame = GameSession(
+            mode = mode,
+            rounds = request.rounds,
+            wordLength = request.wordLength,
+            maxAttempts = request.maxAttempts,
+            difficulty = difficulty,
+            playerName = playerName
+        )
+
+        val response = GameStartedResponse(
+            gameId = currentGame!!.gameId,
+            wordLength = request.wordLength,
+            maxAttempts = request.maxAttempts,
+            rounds = request.rounds
+        )
+
+        sendMessage("GAME_STARTED", json.encodeToString(response))
+    }
+
+    private suspend fun handleGuessPVE(request: GuessRequest) {
+        val game = currentGame
+        if (game == null) {
+            sendError("No hay partida activa")
+            return
+        }
+
+        // Procesar intento del jugador
+        val playerResult = game.processPlayerGuess(request.word)
+
+        val response = GuessResultResponse(
+            word = request.word,
+            result = playerResult.evaluation.map { tileStateToString(it) },
+            isValid = playerResult.valid,
+            message = playerResult.message
+        )
+        sendMessage("GUESS_RESULT", json.encodeToString(response))
+
+        // Si el modo es PVE, la IA hace su turno
+        if (game.mode == GameMode.PVE && !game.isRoundOver()) {
+            delay(500) // Pequeño delay para simular "pensamiento"
+            val aiResult = game.processAITurn()
+
+            if (aiResult != null) {
+                val aiMoveResponse = AIMoveResponse(
+                    word = aiResult.guess,
+                    attemptNumber = aiResult.attempts,
+                    result = aiResult.evaluation.map { tileStateToString(it) }
+                )
+                sendMessage("AI_MOVE", json.encodeToString(aiMoveResponse))
+            }
+        }
+
+        // Verificar si la ronda terminó
+        if (game.isRoundOver()) {
+            val roundResult = game.getRoundWinner()
+
+            val roundWinnerResponse = RoundWinnerResponse(
+                winner = roundResult.winner.name,
+                attempts = roundResult.playerAttempts,
+                solution = roundResult.solution
+            )
+            sendMessage("ROUND_WINNER", json.encodeToString(roundWinnerResponse))
+
+            // Verificar si el juego completo terminó
+            if (game.isGameOver()) {
+                val gameResult = game.getGameWinner()
+                val stats = game.getStats()
+
+                val gameWinnerResponse = GameWinnerResponse(
+                    winner = gameResult.winner.name,
+                    playerRounds = gameResult.playerRounds,
+                    aiRounds = gameResult.aiRounds
+                )
+                sendMessage("GAME_WINNER", json.encodeToString(gameWinnerResponse))
+
+                // Actualizar records
+                recordsManager.updatePlayerStats(
+                    playerName = playerName,
+                    won = gameResult.winner == Winner.PLAYER,
+                    attempts = stats.playerAttempts,
+                    wordsGuessed = stats.playerWordsGuessed,
+                    totalWords = stats.totalWordsAttempted
+                )
+
+                println("🏆 Partida PVE terminada - Ganador: ${gameResult.winner}")
+                currentGame = null
+            } else {
+                // Iniciar siguiente ronda
+                delay(1000)
+                game.startNewRound()
+            }
+        }
+    }
+
+    private suspend fun handleSyncRecords() {
+        val records = recordsManager.getRecords()
+        val recordsResponse = RecordsDataResponse(records)
+        sendMessage("RECORDS_DATA", json.encodeToString(recordsResponse))
+        println("📊 Enviando records a cliente #$clientId")
     }
 }

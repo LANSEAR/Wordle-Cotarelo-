@@ -26,38 +26,85 @@ object WordDictionary {
     private fun getCommonWords(length: Int): List<String> {
         return when (length) {
             4 -> listOf(
+                // Palabras muy comunes
                 "CASA", "MESA", "GATO", "AMOR", "VIDA", "AGUA", "SOPA", "LUNA",
                 "PATO", "PELO", "PINO", "CAMA", "SOFA", "TREN", "AUTO", "MANO",
                 "DEDO", "BOCA", "CARA", "OJOS", "PIES", "ALMA", "BESO", "DATO",
                 "FOCO", "HOYO", "IDEA", "LODO", "MOTO", "NOTA", "OLOR", "PALA",
                 "RAMA", "ROPA", "SALA", "TAPA", "VASO", "ZONA", "BOTE", "CAJA",
                 "PASO", "PESO", "PISO", "ROSA", "SACO", "SEDA", "TEMA", "TORO",
-                "LAVA", "NUBE", "CUBO", "PELO", "MAPA", "PALA", "RATA", "TUBO",
-                "CERO", "HUMO", "LAGO", "PATO", "RAYO", "SACO", "TAPA", "VELA"
+                "LAVA", "NUBE", "CUBO", "MAPA", "RATA", "TUBO", "VELA",
+                "CERO", "HUMO", "LAGO", "RAYO",
+                // Sustantivos adicionales
+                "ARCO", "ASNO", "AULA", "BAÑO", "BOLA", "CAMA", "CAPA",
+                "CAÑA", "CINE", "COCO", "COLA", "COPA", "CUNA", "CUÑA", "DAMA",
+                "DADO", "DOTE", "FAMA", "FILA", "FOTO", "GAFA", "GOMA", "HADA",
+                "HIJO", "HOJA", "ISLA", "JOYA", "KILO", "LADO", "LANA",
+                "LEON", "LIMA", "LINO", "LOBO", "LOTE", "LUJO", "LUTO", "MAIZ",
+                "MALO", "MAPA", "MASA", "META", "MIEL", "MINA", "MODO", "MOÑO",
+                "NIÑO", "NIÑA", "NIDO", "NUBE", "ONDA", "OBRA", "ODIO", "PAJA",
+                "PALO", "PAPA", "PARE", "PATO", "PAVO", "PERA", "PICO",
+                "PILA", "PINO", "PIPA", "PLAN", "POLO", "POMO", "POZA", "POZO",
+                "PUMA", "PUNO", "RAMO", "RANA", "RAZO", "REMO", "RETO", "RIFA",
+                "RIMA", "RITO", "SACO", "SALA", "SAPO", "SEDA", "SENO", "SETA",
+                "SILO", "SINO", "SOFA", "SOLO", "TACO", "TAJO", "TELA", "TIPO",
+                "TIRO", "TIZA", "TODO", "TOMO", "TONO", "TOPO", "TUBO", "TUFO"
+                ,"URNA", "VANO", "VASO", "VELA", "VETA", "VIÑA",
+                "VISA", "VOTO", "YEMA", "YESO", "YUGO", "ZETA", "ZINC", "ZUMO"
             )
             5 -> listOf(
+                // Palabras muy comunes
                 "PLAYA", "CAMPO", "MUNDO", "TIERRA", "FUEGO", "NOCHE", "TARDE", "LIBRO",
-                "PAPEL", "VERDE", "ROJO", "AZUL", "NEGRO", "ROSA", "ALTO", "BAJO",
-                "MESA", "SILLA", "PUERTA", "PARED", "FLOR", "PLANTA", "FRUTA", "PERA",
-                "COCHE", "MOTO", "TREN", "BARCO", "CIELO", "COLOR", "FONDO", "FORMA",
+                "PAPEL", "VERDE", "NEGRO",
+                "SILLA", "PUERTA", "PARED", "FRUTA",
+                "COCHE", "BARCO", "CIELO", "COLOR", "FONDO", "FORMA",
                 "GENTE", "GRUPO", "HECHO", "LUGAR", "MEDIO", "NIVEL", "ORDEN",
-                "PARTE", "PUNTO", "RADIO", "SIGLO", "SUELO", "TIEMPO", "VISTA", "VOCAL",
-                "NIEVE", "CARNE", "BRAZO", "DEDO", "PIANO", "FERIA", "JUEGO", "LLAMA"
+                "PARTE", "PUNTO", "RADIO", "SIGLO", "SUELO", "VISTA", "VOCAL",
+                "NIEVE", "CARNE", "BRAZO", "DEDO", "PIANO", "FERIA", "JUEGO", "LLAMA",
+                // Sustantivos comunes
+                "ARENA", "BANCO", "BARRO", "BOLSA", "BOMBA", "CABLE", "CALLE", "CALOR",
+                "CARTA", "CERRO", "CHICO", "CLASE", "COSTA", "CREMA", "CUERO",
+                "CURSO", "DANZA", "DISCO", "DOLOR", "DROGA", "DUCHA", "FECHA",
+                "FIESTA", "FIRMA", "FRENO","GASTO", "GOLPE", "GRASA", "GRUTA",
+                "GUERRA", "GUSTO", "HABLA", "HIELO", "HORNO", "HOTEL", "HUESO", "HUMOR",
+                "JABON", "JOVEN", "JUGO", "LABOR", "LECHE", "LETRA", "LÍNEA",
+                "LISTA", "LLAVE", "LUCHA", "MADRE", "MARCA", "MARZO", "METAL",
+                "METRO", "MONTE", "MUSEO", "NOVIO", "PADRE",
+                "PALMA", "PATIO", "PELEA",
+                "PIEZA", "PLAZA", "POEMA", "POLLO", "PRISA",
+                "PUEBLO", "PULSO", "QUESO", "RATON", "REINO", "RELOJ",
+                "RESTO", "RITMO", "RUEDA", "RUIDO", "SALSA",
+                "SALTO", "SELVA", "SEÑAL", "SILLA", "SITIO",
+                "SUEÑO", "TABLA", "TALLA", "TECHO",
+                "TIGRE", "TINTA", "TORRE", "TORTA", "TRAJE", "TRAMO",
+                "TRATO", "TRIBU", "TRONO", "TROZO", "UNION", "VALOR", "VASO", "VENTA",
+                "VERSO", "VIAJE", "VIENTO","VIRUS", "VISTA",
+                // Verbos comunes (infinitivos)
+                "ANDAR", "ABRIR", "BEBER", "COMER", "CREER", "DEBER", "DECIR",
+                "HACER","LEER", "MIRAR","PASAR",
+                "PEDIR", "PONER", "PODER", "SABER", "SALIR", "TENER", "TOMAR", "TRAER",
+                "VENIR", "VIVIR", "VOLAR", "CREAR", "BAJAR", "SUBIR", "SACAR",
+                "GANAR", "TOCAR", "SOÑAR",
+                // Adjetivos
+                "BUENO", "MALO", "NUEVO", "VIEJO", "JOVEN", "LARGO", "CORTO",
+                "ANCHO", "CLARO", "SUCIO",
+                "POBRE", "FELIZ", "LENTO", "DEBIL",
+                "DULCE","LLENO", "VACIO", "CERCA", "LEJOS"
             )
             6 -> listOf(
-                "COMIDA", "BEBIDA", "COCINA", "SALON", "CUARTO", "JARDIN", "PARQUE",
-                "ESCUELA", "COLEGIO", "IGLESIA", "TEMPLO", "MUSEO", "TEATRO", "ESTADIO",
-                "PLAZA", "CALLE", "CAMINO", "BOSQUE", "VOLCAN", "DESIERTO",
-                "LAGO", "OCEANO", "ISLA", "COSTA", "PLAYA", "ARENA", "ROCA",
-                "PIEDRA", "METAL", "HIERRO", "COBRE", "PLATA", "VIDRIO", "MADERA",
-                "CIUDAD", "PUEBLO", "CENTRO", "BARRIO", "MERCADO", "TIENDA", "BANCO"
+                "COMIDA", "BEBIDA", "COCINA", "CUARTO", "JARDIN", "PARQUE",
+                "COLEGIO","TEMPLO", "TEATRO", "ESTADO",
+                "PLAZAS", "CALLES", "CAMINO", "BOSQUE", "VOLCAN",
+                "OCEANO",
+                "PIEDRA","HIERRO","VIDRIO", "MADERA",
+                "CIUDAD", "PUEBLO", "CENTRO", "BARRIO", "MERCADO", "TIENDA",
             )
             7 -> listOf(
-                "VENTANA", "PALABRA", "MENSAJE", "CULTURA", "MUSICA", "PINTURA",
-                "TRABAJO", "ESTUDIO", "CIENCIA", "FISICA", "QUIMICA", "BIOLOGIA",
-                "MEDICINA", "HOSPITAL", "CLINICA", "FARMACIA", "DOCTOR", "PACIENTE",
-                "GOBIERNO", "ECONOMIA", "FINANZAS", "EMPRESA", "NEGOCIO", "MERCADO", "COMERCIO",
-                "HISTORIA", "BATALLA", "VICTORIA", "DERROTA", "EJERCITO", "SOLDADO"
+                "VENTANA", "PALABRA", "MENSAJE", "CULTURA","PINTURA",
+                "TRABAJO", "ESTUDIO", "CIENCIA","QUIMICA",
+                "CLINICA", "FARMACO","PACIENTE",
+                "FINANZA", "EMPRESA", "NEGOCIO", "MERCADO",
+                "BATALLA", "DERROTA", "SOLDADO"
             )
             else -> emptyList()
         }
