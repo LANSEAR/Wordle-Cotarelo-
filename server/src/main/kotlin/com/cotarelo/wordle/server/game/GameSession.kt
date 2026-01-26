@@ -125,7 +125,7 @@ class GameSession(
     }
 
     /**
-     * Procesa un turno de la IA
+     * Procesa un turno de la IA (se llama después del turno del jugador)
      */
     fun processAITurn(): AITurnResult? {
         if (mode != GameMode.PVE || ai == null) return null

@@ -391,6 +391,9 @@ class PVPClientHandler(
             // Remover jugador de cualquier sala
             RoomManager.removePlayer(clientId)
 
+            // Limpiar juego PVE si está activo
+            currentGame = null
+
             unregister(clientId)
             scope.cancel()
             reader.close()
@@ -468,11 +471,17 @@ class PVPClientHandler(
         )
         sendMessage("GUESS_RESULT", json.encodeToString(response))
 
-        // Si el modo es PVE, la IA hace su turno
-        if (game.mode == GameMode.PVE && !game.isRoundOver()) {
-            delay(500) // Pequeño delay para simular "pensamiento"
-            val aiResult = game.processAITurn()
+        // Verificar si la ronda terminó después del intento del jugador
+        if (game.isRoundOver()) {
+            handleRoundEnd()
+            return
+        }
 
+        // Turno de la IA después del jugador (sistema de turnos)
+        if (game.mode == GameMode.PVE) {
+            delay(1000) // Pequeño delay para que se vea el resultado del jugador
+
+            val aiResult = game.processAITurn()
             if (aiResult != null) {
                 val aiMoveResponse = AIMoveResponse(
                     word = aiResult.guess,
@@ -480,48 +489,56 @@ class PVPClientHandler(
                     result = aiResult.evaluation.map { tileStateToString(it) }
                 )
                 sendMessage("AI_MOVE", json.encodeToString(aiMoveResponse))
+
+                // Verificar si la ronda terminó después del turno de la IA
+                if (game.isRoundOver()) {
+                    handleRoundEnd()
+                }
             }
         }
+    }
 
-        // Verificar si la ronda terminó
-        if (game.isRoundOver()) {
-            val roundResult = game.getRoundWinner()
+    /**
+     * Maneja el fin de una ronda
+     */
+    private suspend fun handleRoundEnd() {
+        val game = currentGame ?: return
+        val roundResult = game.getRoundWinner()
 
-            val roundWinnerResponse = RoundWinnerResponse(
-                winner = roundResult.winner.name,
-                attempts = roundResult.playerAttempts,
-                solution = roundResult.solution
+        val roundWinnerResponse = RoundWinnerResponse(
+            winner = roundResult.winner.name,
+            attempts = roundResult.playerAttempts,
+            solution = roundResult.solution
+        )
+        sendMessage("ROUND_WINNER", json.encodeToString(roundWinnerResponse))
+
+        // Verificar si el juego completo terminó
+        if (game.isGameOver()) {
+            val gameResult = game.getGameWinner()
+            val stats = game.getStats()
+
+            val gameWinnerResponse = GameWinnerResponse(
+                winner = gameResult.winner.name,
+                playerRounds = gameResult.playerRounds,
+                aiRounds = gameResult.aiRounds
             )
-            sendMessage("ROUND_WINNER", json.encodeToString(roundWinnerResponse))
+            sendMessage("GAME_WINNER", json.encodeToString(gameWinnerResponse))
 
-            // Verificar si el juego completo terminó
-            if (game.isGameOver()) {
-                val gameResult = game.getGameWinner()
-                val stats = game.getStats()
+            // Actualizar records
+            recordsManager.updatePlayerStats(
+                playerName = playerName,
+                won = gameResult.winner == Winner.PLAYER,
+                attempts = stats.playerAttempts,
+                wordsGuessed = stats.playerWordsGuessed,
+                totalWords = stats.totalWordsAttempted
+            )
 
-                val gameWinnerResponse = GameWinnerResponse(
-                    winner = gameResult.winner.name,
-                    playerRounds = gameResult.playerRounds,
-                    aiRounds = gameResult.aiRounds
-                )
-                sendMessage("GAME_WINNER", json.encodeToString(gameWinnerResponse))
-
-                // Actualizar records
-                recordsManager.updatePlayerStats(
-                    playerName = playerName,
-                    won = gameResult.winner == Winner.PLAYER,
-                    attempts = stats.playerAttempts,
-                    wordsGuessed = stats.playerWordsGuessed,
-                    totalWords = stats.totalWordsAttempted
-                )
-
-                println("🏆 Partida PVE terminada - Ganador: ${gameResult.winner}")
-                currentGame = null
-            } else {
-                // Iniciar siguiente ronda
-                delay(1000)
-                game.startNewRound()
-            }
+            println("🏆 Partida PVE terminada - Ganador: ${gameResult.winner}")
+            currentGame = null
+        } else {
+            // Iniciar siguiente ronda
+            delay(1000)
+            game.startNewRound()
         }
     }
 
