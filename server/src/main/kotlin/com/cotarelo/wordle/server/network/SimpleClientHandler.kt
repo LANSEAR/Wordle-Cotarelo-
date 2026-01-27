@@ -103,7 +103,8 @@ class SimpleClientHandler(
             wordLength = request.wordLength,
             maxAttempts = request.maxAttempts,
             difficulty = difficulty,
-            playerName = playerName
+            playerName = playerName,
+            timerSeconds = request.timerSeconds
         )
 
         val response = GameStartedResponse(
@@ -137,7 +138,14 @@ class SimpleClientHandler(
 
         // Si el modo es PVE, la IA hace su turno
         if (game.mode == GameMode.PVE && !game.isRoundOver()) {
-            delay(500)
+            // La IA debe jugar más rápido que el temporizador del jugador
+            // Si hay temporizador, usar 70% del tiempo; si no hay, usar 500ms
+            val aiDelay = if (game.timerSeconds > 0) {
+                (game.timerSeconds * 700L).coerceAtLeast(300L)  // Mínimo 300ms
+            } else {
+                500L
+            }
+            delay(aiDelay)
             val aiResult = game.processAITurn()
 
             if (aiResult != null) {

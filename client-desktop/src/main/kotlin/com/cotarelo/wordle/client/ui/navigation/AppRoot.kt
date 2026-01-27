@@ -41,6 +41,10 @@ fun AppRoot(
             Screen.Menu -> MenuScreen(
                 settings = settings,
                 onToggleTheme = { toggleTheme() },
+                onChangeSettings = { newSettings ->
+                    settings = newSettings
+                    repo.save(newSettings)
+                },
                 onStartSinglePlayer = { screen = Screen.Game },
                 onStartPVE = { screen = Screen.GamePVE },
                 onStartPVP = { screen = Screen.Lobby },
@@ -89,6 +93,7 @@ fun AppRoot(
                         maxAttempts = gamePVPScreen.maxAttempts,
                         rounds = gamePVPScreen.rounds,
                         difficulty = gamePVPScreen.difficulty,
+                        settings = settings,
                         connection = connection,
                         onBackToMenu = {
                             pvpConnection = null

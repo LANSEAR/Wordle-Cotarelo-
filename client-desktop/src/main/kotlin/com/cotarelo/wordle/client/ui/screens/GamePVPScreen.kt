@@ -15,6 +15,7 @@ import com.cotarelo.wordle.client.settings.AppSettings
 import com.cotarelo.wordle.client.state.PVPGameController
 import com.cotarelo.wordle.client.ui.components.Board
 import com.cotarelo.wordle.client.ui.components.Keyboard
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -25,6 +26,7 @@ fun GamePVPScreen(
     maxAttempts: Int,
     rounds: Int,
     difficulty: String,
+    settings: AppSettings,
     connection: PVPServerConnection,
     onBackToMenu: () -> Unit,
     onRematch: () -> Unit = onBackToMenu
@@ -40,8 +42,69 @@ fun GamePVPScreen(
 
     val focusRequester = remember { FocusRequester() }
 
+    // Temporizador
+    val timerMax = settings.timerSeconds.coerceIn(10, 180)
+    var secondsLeft by remember(settings.timerEnabled, timerMax, controller.roundWinner) {
+        mutableStateOf(if (settings.timerEnabled) timerMax else 0)
+    }
+
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
+    }
+
+    // Reiniciar temporizador cuando cambia el intento actual (nueva palabra jugada o timeout)
+    LaunchedEffect(controller.state.currentRow) {
+        // Solo reiniciar si aún quedan intentos y el juego está activo
+        if (settings.timerEnabled &&
+            controller.roundWinner == null &&
+            controller.gameWinner == null &&
+            controller.state.currentRow < controller.state.rows &&
+            controller.state.status == com.cotarelo.wordle.client.state.GameState.Status.Playing) {
+            secondsLeft = timerMax
+        } else if (controller.state.currentRow >= controller.state.rows ||
+                   controller.state.status != com.cotarelo.wordle.client.state.GameState.Status.Playing) {
+            // Detener temporizador si el jugador terminó
+            secondsLeft = 0
+        }
+    }
+
+    // Resetear temporizador cuando cambia roundWinner (nueva ronda)
+    LaunchedEffect(controller.roundWinner) {
+        if (controller.roundWinner == null && settings.timerEnabled) {
+            secondsLeft = timerMax
+        }
+    }
+
+    // Cuenta regresiva del temporizador
+    LaunchedEffect(settings.timerEnabled, timerMax, controller.roundWinner, controller.gameWinner, controller.state.currentRow, controller.state.status) {
+        if (!settings.timerEnabled) return@LaunchedEffect
+        if (controller.roundWinner != null || controller.gameWinner != null) return@LaunchedEffect
+
+        // Detener temporizador si el jugador ya completó todos sus intentos
+        val playerFinished = controller.state.currentRow >= controller.state.rows ||
+                           controller.state.status != com.cotarelo.wordle.client.state.GameState.Status.Playing
+
+        if (playerFinished) {
+            secondsLeft = 0
+            return@LaunchedEffect
+        }
+
+        while (secondsLeft > 0 &&
+               controller.roundWinner == null &&
+               controller.gameWinner == null &&
+               controller.state.status == com.cotarelo.wordle.client.state.GameState.Status.Playing &&
+               controller.state.currentRow < controller.state.rows) {
+            delay(1000)
+            secondsLeft -= 1
+        }
+
+        if (secondsLeft <= 0 &&
+            controller.roundWinner == null &&
+            controller.gameWinner == null &&
+            controller.state.status == com.cotarelo.wordle.client.state.GameState.Status.Playing) {
+            // Tiempo agotado - el jugador pierde este intento
+            controller.forceLoseByTimeout()
+        }
     }
 
     DisposableEffect(Unit) {
@@ -101,11 +164,24 @@ fun GamePVPScreen(
                     modifier = Modifier.padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        "Partida PVP",
-                        style = MaterialTheme.typography.h5,
-                        color = MaterialTheme.colors.onSurface
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Partida PVP",
+                            style = MaterialTheme.typography.h5,
+                            color = MaterialTheme.colors.onSurface
+                        )
+                        if (settings.timerEnabled) {
+                            Text(
+                                "⏱ ${formatSeconds(secondsLeft)}",
+                                style = MaterialTheme.typography.h6,
+                                color = if (secondsLeft <= 30) MaterialTheme.colors.error else MaterialTheme.colors.onSurface
+                            )
+                        }
+                    }
                     Spacer(Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -340,4 +416,11 @@ fun GamePVPScreen(
             )
         }
     }
+}
+
+private fun formatSeconds(total: Int): String {
+    val t = total.coerceAtLeast(0)
+    val m = t / 60
+    val s = t % 60
+    return "%d:%02d".format(m, s)
 }

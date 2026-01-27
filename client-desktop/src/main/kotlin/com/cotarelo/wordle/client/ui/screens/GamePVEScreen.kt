@@ -15,6 +15,7 @@ import com.cotarelo.wordle.client.settings.Difficulty
 import com.cotarelo.wordle.client.state.SimpleOnlineGameController
 import com.cotarelo.wordle.client.ui.components.Board
 import com.cotarelo.wordle.client.ui.components.Keyboard
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -34,13 +35,20 @@ fun GamePVEScreen(
                 Difficulty.NORMAL -> "NORMAL"
                 Difficulty.HARD -> "HARD"
                 Difficulty.MIXTA -> "MIXTA"
-            }
+            },
+            timerSeconds = if (settings.timerEnabled) settings.timerSeconds else 0
         )
     }
 
     var showConnectionError by remember { mutableStateOf(false) }
     var showRoundDialog by remember { mutableStateOf(false) }
     var showGameDialog by remember { mutableStateOf(false) }
+
+    // Temporizador
+    val timerMax = settings.timerSeconds.coerceIn(10, 180)
+    var secondsLeft by remember(settings.timerEnabled, timerMax, controller.currentRound) {
+        mutableStateOf(if (settings.timerEnabled) timerMax else 0)
+    }
 
     // Foco para teclado físico
     val focusRequester = remember { FocusRequester() }
@@ -81,16 +89,88 @@ fun GamePVEScreen(
         focusRequester.requestFocus()
     }
 
+    // Reiniciar temporizador cuando cambia el intento actual (nueva palabra jugada o timeout)
+    LaunchedEffect(controller.state.currentRow) {
+        // Solo reiniciar si aún quedan intentos y el juego está activo
+        if (settings.timerEnabled &&
+            controller.roundWinner == null &&
+            controller.gameWinner == null &&
+            controller.state.currentRow < controller.state.rows &&
+            controller.state.status == com.cotarelo.wordle.client.state.GameState.Status.Playing) {
+            secondsLeft = timerMax
+        } else if (controller.state.currentRow >= controller.state.rows ||
+                   controller.state.status != com.cotarelo.wordle.client.state.GameState.Status.Playing) {
+            // Detener temporizador si el jugador terminó
+            secondsLeft = 0
+        }
+    }
+
+    // Resetear temporizador al cambiar de ronda
+    LaunchedEffect(controller.currentRound) {
+        if (settings.timerEnabled) {
+            secondsLeft = timerMax
+        }
+    }
+
+    // Cuenta regresiva del temporizador
+    LaunchedEffect(settings.timerEnabled, timerMax, controller.currentRound, showRoundDialog, showGameDialog, controller.state.currentRow, controller.state.status) {
+        if (!settings.timerEnabled) return@LaunchedEffect
+        if (showRoundDialog || showGameDialog) return@LaunchedEffect
+        if (controller.roundWinner != null || controller.gameWinner != null) return@LaunchedEffect
+
+        // Detener temporizador si el jugador ya completó todos sus intentos
+        val playerFinished = controller.state.currentRow >= controller.state.rows ||
+                           controller.state.status != com.cotarelo.wordle.client.state.GameState.Status.Playing
+
+        if (playerFinished) {
+            secondsLeft = 0
+            return@LaunchedEffect
+        }
+
+        while (secondsLeft > 0 &&
+               controller.roundWinner == null &&
+               controller.gameWinner == null &&
+               !showRoundDialog &&
+               !showGameDialog &&
+               controller.state.status == com.cotarelo.wordle.client.state.GameState.Status.Playing &&
+               controller.state.currentRow < controller.state.rows) {
+            delay(1000)
+            secondsLeft -= 1
+        }
+
+        if (secondsLeft <= 0 &&
+            controller.roundWinner == null &&
+            controller.gameWinner == null &&
+            controller.state.status == com.cotarelo.wordle.client.state.GameState.Status.Playing) {
+            // Tiempo agotado - el jugador pierde este intento
+            controller.forceLoseByTimeout()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Column {
-                        Text("Wordle PVE - Ronda ${controller.currentRound}/${settings.roundsBestOf}")
-                        Text(
-                            "Jugador ${controller.playerRoundsWon} - ${controller.aiRoundsWon} IA",
-                            style = MaterialTheme.typography.caption
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text("Wordle PVE - Ronda ${controller.currentRound}/${settings.roundsBestOf}")
+                                Text(
+                                    "Jugador ${controller.playerRoundsWon} - ${controller.aiRoundsWon} IA",
+                                    style = MaterialTheme.typography.caption
+                                )
+                            }
+                            if (settings.timerEnabled) {
+                                Text(
+                                    "⏱ ${formatSeconds(secondsLeft)}",
+                                    style = MaterialTheme.typography.h6
+                                )
+                            }
+                        }
                     }
                 },
                 navigationIcon = {
@@ -276,4 +356,11 @@ fun GamePVEScreen(
             )
         }
     }
+}
+
+private fun formatSeconds(total: Int): String {
+    val t = total.coerceAtLeast(0)
+    val m = t / 60
+    val s = t % 60
+    return "%d:%02d".format(m, s)
 }

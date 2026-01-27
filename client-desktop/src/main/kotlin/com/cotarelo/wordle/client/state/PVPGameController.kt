@@ -221,6 +221,25 @@ class PVPGameController(
         state = state.copy(message = null)
     }
 
+    fun forceLoseByTimeout() {
+        if (state.status != GameState.Status.Playing) return
+        if (roundWinner != null) return // Ya terminó la ronda
+        if (state.currentRow >= state.rows) return // Ya completó todos los intentos
+
+        val row = state.currentRow
+
+        // Enviar palabra vacía al servidor para que cuente el timeout
+        // El servidor responderá con la evaluación y actualizará el estado
+        scope.launch {
+            val emptyWord = " ".repeat(state.cols)
+            connection.sendGuessPVP(emptyWord, row + 1)
+        }
+
+        // NO actualizamos el estado local aquí - esperamos la respuesta del servidor
+        // Esto evita duplicar la fila vacía
+        // El servidor manejará el fin de ronda cuando ambos jugadores hayan terminado
+    }
+
     fun nextRound() {
         roundWinner = null
         state = GameState(rows = maxAttempts, cols = wordLength)

@@ -35,7 +35,7 @@ fun GameScreen(
     }
 
     // Timer
-    val timerMax = settings.timerSeconds.coerceIn(30, 180)
+    val timerMax = settings.timerSeconds.coerceIn(10, 180)
     var secondsLeft by remember(settings.timerEnabled, timerMax, roundIndex) {
         mutableStateOf(if (settings.timerEnabled) timerMax else 0)
     }
@@ -58,18 +58,44 @@ fun GameScreen(
         }
     }
 
+    // Reiniciar temporizador cuando cambia el intento actual (nueva palabra jugada o timeout)
+    LaunchedEffect(controller.state.currentRow) {
+        // Solo reiniciar si aún quedan intentos y el juego está activo
+        if (settings.timerEnabled &&
+            controller.state.status == GameState.Status.Playing &&
+            controller.state.currentRow < controller.state.rows) {
+            secondsLeft = timerMax
+        } else if (controller.state.currentRow >= controller.state.rows) {
+            // Detener temporizador si el jugador terminó
+            secondsLeft = 0
+        }
+    }
+
     // Cuenta atrás (solo si se está jugando y NO hay diálogo)
-    LaunchedEffect(settings.timerEnabled, timerMax, roundIndex, controller.state.status, showEndDialog) {
+    LaunchedEffect(settings.timerEnabled, timerMax, roundIndex, controller.state.status, showEndDialog, controller.state.currentRow) {
         if (!settings.timerEnabled) return@LaunchedEffect
         if (showEndDialog) return@LaunchedEffect
         if (controller.state.status != GameState.Status.Playing) return@LaunchedEffect
 
-        while (secondsLeft > 0 && controller.state.status == GameState.Status.Playing && !showEndDialog) {
+        // Detener temporizador si el jugador ya completó todos sus intentos
+        val playerFinished = controller.state.currentRow >= controller.state.rows
+
+        if (playerFinished) {
+            secondsLeft = 0
+            return@LaunchedEffect
+        }
+
+        while (secondsLeft > 0 &&
+               controller.state.status == GameState.Status.Playing &&
+               !showEndDialog &&
+               controller.state.currentRow < controller.state.rows) {
             delay(1000)
             secondsLeft -= 1
         }
 
-        if (secondsLeft <= 0 && controller.state.status == GameState.Status.Playing) {
+        if (secondsLeft <= 0 &&
+            controller.state.status == GameState.Status.Playing &&
+            controller.state.currentRow < controller.state.rows) {
             controller.forceLoseByTimeout()
         }
     }

@@ -47,25 +47,32 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(
-                checked = settings.timerEnabled,
-                onCheckedChange = { onChangeSettings(settings.copy(timerEnabled = it)) }
-            )
-            Spacer(Modifier.width(8.dp))
-            Text("Tiempo por palabra (opcional)")
-        }
-
-        if (settings.timerEnabled) {
+        Column(Modifier.fillMaxWidth()) {
+            Text("Temporizador", style = MaterialTheme.typography.subtitle1)
             Spacer(Modifier.height(8.dp))
-            TimerSecondsSelector(
-                value = settings.timerSeconds,
-                onChange = { onChangeSettings(settings.copy(timerSeconds = it)) }
-            )
-            Text(
-                text = "Máximo 3 minutos",
-                style = MaterialTheme.typography.caption
-            )
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = settings.timerEnabled,
+                    onCheckedChange = { onChangeSettings(settings.copy(timerEnabled = it)) }
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Activar temporizador por palabra")
+            }
+
+            if (settings.timerEnabled) {
+                Spacer(Modifier.height(12.dp))
+                TimerSecondsSelector(
+                    value = settings.timerSeconds,
+                    onChange = { onChangeSettings(settings.copy(timerSeconds = it)) }
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "Al agotar el tiempo, pierdes automáticamente",
+                    style = MaterialTheme.typography.caption,
+                    color = MaterialTheme.colors.onBackground.copy(alpha = 0.7f)
+                )
+            }
         }
 
         Spacer(Modifier.weight(1f))
@@ -174,7 +181,7 @@ private fun TimerSecondsSelector(value: Int, onChange: (Int) -> Unit) {
         Spacer(Modifier.height(8.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(60, 120, 180).forEach { option ->
+            listOf(10, 60, 120, 180).forEach { option ->
                 val selected = option == value
                 Button(
                     onClick = { onChange(option) },
@@ -182,7 +189,7 @@ private fun TimerSecondsSelector(value: Int, onChange: (Int) -> Unit) {
                     else ButtonDefaults.outlinedButtonColors(),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    Text("${option / 60} min")
+                    Text(if (option < 60) "$option s" else "${option / 60} min")
                 }
             }
         }

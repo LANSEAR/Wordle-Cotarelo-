@@ -58,10 +58,21 @@ class GameController(
 
     fun forceLoseByTimeout() {
         if (state.status != GameState.Status.Playing) return
+        if (state.currentRow >= state.rows) return // Ya completó todos los intentos
+
+        // En lugar de terminar inmediatamente, enviar palabra vacía para perder un intento
+        val row = state.currentRow
+        val eval = List(state.cols) { TileState.Absent }
+        val newStates = state.states.updateRow(row, eval)
+
+        val lastRow = row == state.rows - 1
+
         state = state.copy(
-            status = GameState.Status.Lost,
-            message = "Tiempo agotado. Era: $secret",
-            currentCol = state.cols
+            states = newStates,
+            currentRow = if (lastRow) row else row + 1,
+            currentCol = 0,
+            status = if (lastRow) GameState.Status.Lost else GameState.Status.Playing,
+            message = if (lastRow) "Tiempo agotado. Era: $secret" else "Tiempo agotado - intento perdido"
         )
     }
 

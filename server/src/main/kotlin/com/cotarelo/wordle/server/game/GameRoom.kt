@@ -148,6 +148,48 @@ class GameRoom(
 
         val normalizedGuess = guess.trim().uppercase()
 
+        // Si la palabra está vacía o son solo espacios, es un timeout
+        val isTimeout = normalizedGuess.isEmpty() || normalizedGuess.all { it == ' ' }
+
+        if (isTimeout) {
+            // Timeout: contar como intento perdido para el jugador correspondiente
+            return when (clientId) {
+                player1Id -> {
+                    if (player1Attempts >= maxAttempts) {
+                        return GuessResult(false, emptyList(), false, player1Attempts, "Sin intentos")
+                    }
+                    player1Attempts++
+                    val evaluation = List(secret.length) { TileState.Absent }
+                    player1Guesses.add("" to evaluation)
+
+                    // Verificar si la ronda terminó
+                    if (player1Won || player2Won || (player1Attempts >= maxAttempts && player2Attempts >= maxAttempts)) {
+                        roundFinished = true
+                    }
+
+                    println("⏰ Timeout jugador 1 - intento $player1Attempts perdido")
+                    GuessResult(true, evaluation, false, player1Attempts, "Tiempo agotado - intento perdido")
+                }
+                player2Id -> {
+                    if (player2Attempts >= maxAttempts) {
+                        return GuessResult(false, emptyList(), false, player2Attempts, "Sin intentos")
+                    }
+                    player2Attempts++
+                    val evaluation = List(secret.length) { TileState.Absent }
+                    player2Guesses.add("" to evaluation)
+
+                    // Verificar si la ronda terminó
+                    if (player1Won || player2Won || (player1Attempts >= maxAttempts && player2Attempts >= maxAttempts)) {
+                        roundFinished = true
+                    }
+
+                    println("⏰ Timeout jugador 2 - intento $player2Attempts perdido")
+                    GuessResult(true, evaluation, false, player2Attempts, "Tiempo agotado - intento perdido")
+                }
+                else -> null
+            }
+        }
+
         // Validar longitud
         if (normalizedGuess.length != secret.length) {
             return GuessResult(

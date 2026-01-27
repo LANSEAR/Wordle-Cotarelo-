@@ -16,6 +16,7 @@ import com.cotarelo.wordle.client.settings.ThemeMode
 fun MenuScreen(
     settings: AppSettings,
     onToggleTheme: () -> Unit,
+    onChangeSettings: (AppSettings) -> Unit,
     onStartSinglePlayer: () -> Unit,
     onStartPVE: () -> Unit,
     onStartPVP: () -> Unit,
@@ -68,6 +69,58 @@ fun MenuScreen(
                 )
 
                 Spacer(Modifier.height(24.dp))
+
+                // Temporizador en el menú principal
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = MaterialTheme.colors.surface,
+                    elevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "⏱ Temporizador",
+                                style = MaterialTheme.typography.subtitle1,
+                                color = MaterialTheme.colors.onSurface
+                            )
+                            if (settings.timerEnabled) {
+                                val timeText = if (settings.timerSeconds < 60) {
+                                    "${settings.timerSeconds} s por palabra"
+                                } else {
+                                    "${settings.timerSeconds / 60} min por palabra"
+                                }
+                                Text(
+                                    timeText,
+                                    style = MaterialTheme.typography.caption,
+                                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
+                                )
+                            } else {
+                                Text(
+                                    "Desactivado",
+                                    style = MaterialTheme.typography.caption,
+                                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                        Switch(
+                            checked = settings.timerEnabled,
+                            onCheckedChange = { enabled ->
+                                onChangeSettings(settings.copy(timerEnabled = enabled))
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colors.primary
+                            )
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
 
                 Button(
                     onClick = onStartSinglePlayer,

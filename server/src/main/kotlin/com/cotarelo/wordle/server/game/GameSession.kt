@@ -19,7 +19,8 @@ class GameSession(
     val wordLength: Int,
     val maxAttempts: Int,
     val difficulty: Difficulty,
-    val playerName: String = "Player"
+    val playerName: String = "Player",
+    val timerSeconds: Int = 0  // 0 = sin temporizador
 ) {
     // Estado de la partida
     private var currentRound = 0
@@ -88,6 +89,26 @@ class GameSession(
 
         // Validar longitud
         val normalizedGuess = guess.trim().uppercase()
+
+        // Si la palabra está vacía o son solo espacios, es un timeout
+        val isTimeout = normalizedGuess.isEmpty() || normalizedGuess.all { it == ' ' }
+
+        if (isTimeout) {
+            // Timeout: contar como intento perdido
+            playerAttempts++
+            playerGuesses.add("")
+            println("⏰ Timeout del jugador - intento $playerAttempts perdido")
+            val evaluation = List(secret.length) { TileState.Absent }
+
+            return GuessResult(
+                valid = true,
+                evaluation = evaluation,
+                won = false,
+                attempts = playerAttempts,
+                message = "Tiempo agotado - intento perdido"
+            )
+        }
+
         if (normalizedGuess.length != secret.length) {
             println("❌ Longitud incorrecta: guess='$normalizedGuess' (${normalizedGuess.length}) vs secret='$secret' (${secret.length})")
             return GuessResult(

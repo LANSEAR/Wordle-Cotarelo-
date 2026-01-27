@@ -85,14 +85,16 @@ class SimpleServerConnection(
         rounds: Int,
         wordLength: Int,
         maxAttempts: Int,
-        difficulty: String
+        difficulty: String,
+        timerSeconds: Int = 0
     ) {
         val request = StartGameRequest(
             mode = mode,
             rounds = rounds,
             wordLength = wordLength,
             maxAttempts = maxAttempts,
-            difficulty = difficulty
+            difficulty = difficulty,
+            timerSeconds = timerSeconds
         )
         sendMessage("START_GAME", json.encodeToString(request))
     }

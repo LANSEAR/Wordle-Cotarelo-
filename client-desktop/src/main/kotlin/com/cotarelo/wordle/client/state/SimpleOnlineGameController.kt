@@ -17,7 +17,8 @@ class SimpleOnlineGameController(
     private val wordLength: Int,
     private val maxAttempts: Int,
     private val rounds: Int,
-    private val difficulty: String  // "EASY", "NORMAL", "HARD"
+    private val difficulty: String,  // "EASY", "NORMAL", "HARD"
+    private val timerSeconds: Int = 0  // 0 = sin temporizador
 ) {
     var state by mutableStateOf(GameState(rows = maxAttempts, cols = wordLength))
         private set
@@ -79,7 +80,8 @@ class SimpleOnlineGameController(
             rounds = rounds,
             wordLength = wordLength,
             maxAttempts = maxAttempts,
-            difficulty = difficulty
+            difficulty = difficulty,
+            timerSeconds = timerSeconds
         )
 
         return true
@@ -261,6 +263,27 @@ class SimpleOnlineGameController(
      */
     fun clearMessage() {
         state = state.copy(message = null)
+    }
+
+    /**
+     * Fuerza una pérdida por tiempo agotado
+     */
+    fun forceLoseByTimeout() {
+        if (state.status != GameState.Status.Playing) return
+        if (roundWinner != null) return // Ya terminó la ronda
+        if (state.currentRow >= state.rows) return // Ya completó todos los intentos
+
+        // Enviar palabra vacía al servidor para que la IA también juegue
+        // El servidor responderá con la evaluación y actualizará el estado
+        val row = state.currentRow
+        val emptyWord = " ".repeat(state.cols)  // Palabra vacía de longitud correcta
+
+        scope.launch {
+            connection.sendGuess(emptyWord, row + 1)
+        }
+
+        // NO actualizamos el estado local aquí - esperamos la respuesta del servidor
+        // Esto evita duplicar la fila vacía
     }
 
     /**
