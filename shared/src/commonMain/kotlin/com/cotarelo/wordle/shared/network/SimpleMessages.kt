@@ -13,7 +13,8 @@ data class StartGameRequest(
     val wordLength: Int,
     val maxAttempts: Int,
     val difficulty: String,  // "EASY", "NORMAL", "HARD"
-    val timerSeconds: Int = 0  // 0 = sin temporizador
+    val timerSeconds: Int = 0,  // 0 = sin temporizador
+    val playerName: String = ""  // Nombre del jugador
 )
 
 @Serializable

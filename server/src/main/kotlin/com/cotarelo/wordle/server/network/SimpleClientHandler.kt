@@ -90,10 +90,16 @@ class SimpleClientHandler(
     private suspend fun handleStartGame(request: StartGameRequest) {
         println("🎮 Cliente #$clientId inicia partida ${request.mode}")
 
+        // Actualizar playerName si se proporcionó en el request
+        if (request.playerName.isNotEmpty()) {
+            playerName = request.playerName
+        }
+
         val mode = if (request.mode == "PVE") GameMode.PVE else GameMode.PVP
         val difficulty = when (request.difficulty) {
             "EASY" -> Difficulty.EASY
             "HARD" -> Difficulty.HARD
+            "MIXTA" -> Difficulty.MIXTA
             else -> Difficulty.NORMAL
         }
 
@@ -204,7 +210,8 @@ class SimpleClientHandler(
 
     private suspend fun handleSyncRecords() {
         val records = recordsManager.getRecords()
-        sendMessage("RECORDS_DATA", json.encodeToString(records))
+        val response = RecordsDataResponse(records)
+        sendMessage("RECORDS_DATA", json.encodeToString(response))
         println("📊 Enviando records a cliente #$clientId")
     }
 

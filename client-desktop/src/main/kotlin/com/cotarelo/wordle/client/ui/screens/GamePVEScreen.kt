@@ -36,7 +36,8 @@ fun GamePVEScreen(
                 Difficulty.HARD -> "HARD"
                 Difficulty.MIXTA -> "MIXTA"
             },
-            timerSeconds = if (settings.timerEnabled) settings.timerSeconds else 0
+            timerSeconds = if (settings.timerEnabled) settings.timerSeconds else 0,
+            playerName = settings.playerName
         )
     }
 

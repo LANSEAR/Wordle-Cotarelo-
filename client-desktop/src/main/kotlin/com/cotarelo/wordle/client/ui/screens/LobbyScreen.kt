@@ -27,7 +27,7 @@ fun LobbyScreen(
     var isConnected by remember { mutableStateOf(false) }
     var rooms by remember { mutableStateOf<List<RoomInfoDto>>(emptyList()) }
     var showCreateDialog by remember { mutableStateOf(false) }
-    var playerName by remember { mutableStateOf("Jugador${(1000..9999).random()}") }
+    var playerName by remember { mutableStateOf(settings.playerName) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var waitingForOpponent by remember { mutableStateOf(false) }
     var myRoomId by remember { mutableStateOf<String?>(null) }

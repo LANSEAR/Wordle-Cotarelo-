@@ -2,7 +2,7 @@ package com.cotarelo.wordle.client.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -15,8 +15,19 @@ fun SettingsScreen(
     onChangeSettings: (AppSettings) -> Unit,
     onBack: () -> Unit
 ) {
-    Column(Modifier.fillMaxSize().padding(24.dp)) {
-        Text("Configuración", style = MaterialTheme.typography.h5)
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colors.background
+    ) {
+        Column(Modifier.fillMaxSize().padding(24.dp)) {
+            Text("Configuración", style = MaterialTheme.typography.h5, color = MaterialTheme.colors.onBackground)
+        Spacer(Modifier.height(16.dp))
+
+        SettingPlayerName(
+            value = settings.playerName,
+            onChange = { onChangeSettings(settings.copy(playerName = it)) }
+        )
+
         Spacer(Modifier.height(16.dp))
 
         SettingWordLength(
@@ -48,7 +59,7 @@ fun SettingsScreen(
         Spacer(Modifier.height(16.dp))
 
         Column(Modifier.fillMaxWidth()) {
-            Text("Temporizador", style = MaterialTheme.typography.subtitle1)
+            Text("Temporizador", style = MaterialTheme.typography.subtitle1, color = MaterialTheme.colors.onBackground)
             Spacer(Modifier.height(8.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -57,7 +68,7 @@ fun SettingsScreen(
                     onCheckedChange = { onChangeSettings(settings.copy(timerEnabled = it)) }
                 )
                 Spacer(Modifier.width(8.dp))
-                Text("Activar temporizador por palabra")
+                Text("Activar temporizador por palabra", color = MaterialTheme.colors.onBackground)
             }
 
             if (settings.timerEnabled) {
@@ -77,20 +88,54 @@ fun SettingsScreen(
 
         Spacer(Modifier.weight(1f))
 
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            OutlinedButton(onClick = onBack) { Text("Volver") }
-            Text(
-                text = "Se guarda automáticamente",
-                style = MaterialTheme.typography.caption
-            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                OutlinedButton(onClick = onBack) { Text("Volver") }
+                Text(
+                    text = "Se guarda automáticamente",
+                    style = MaterialTheme.typography.caption,
+                    color = MaterialTheme.colors.onBackground.copy(alpha = 0.7f)
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun SettingPlayerName(value: String, onChange: (String) -> Unit) {
+    var textValue by remember { mutableStateOf(value) }
+
+    Column(Modifier.fillMaxWidth()) {
+        Text("Nombre de jugador", style = MaterialTheme.typography.subtitle1, color = MaterialTheme.colors.onBackground)
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = textValue,
+            onValueChange = { newValue ->
+                // Limitar a 20 caracteres y solo alfanuméricos
+                val filtered = newValue.filter { it.isLetterOrDigit() }.take(20)
+                textValue = filtered
+                if (filtered.isNotEmpty()) {
+                    onChange(filtered)
+                }
+            },
+            modifier = Modifier.fillMaxWidth(0.5f),
+            singleLine = true,
+            placeholder = { Text("Introduce tu nombre") }
+        )
+
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = "Máximo 20 caracteres (solo letras y números)",
+            style = MaterialTheme.typography.caption,
+            color = MaterialTheme.colors.onBackground.copy(alpha = 0.7f)
+        )
     }
 }
 
 @Composable
 private fun SettingWordLength(value: Int, onChange: (Int) -> Unit) {
     Column(Modifier.fillMaxWidth()) {
-        Text("Longitud palabra", style = MaterialTheme.typography.subtitle1)
+        Text("Longitud palabra", style = MaterialTheme.typography.subtitle1, color = MaterialTheme.colors.onBackground)
         Spacer(Modifier.height(8.dp))
         Stepper(value = value, min = 4, max = 7, onChange = onChange)
     }
@@ -99,7 +144,7 @@ private fun SettingWordLength(value: Int, onChange: (Int) -> Unit) {
 @Composable
 private fun SettingMaxAttempts(value: Int, onChange: (Int) -> Unit) {
     Column(Modifier.fillMaxWidth()) {
-        Text("Intentos máximos", style = MaterialTheme.typography.subtitle1)
+        Text("Intentos máximos", style = MaterialTheme.typography.subtitle1, color = MaterialTheme.colors.onBackground)
         Spacer(Modifier.height(8.dp))
         Stepper(value = value, min = 4, max = 10, onChange = onChange)
     }
@@ -108,7 +153,7 @@ private fun SettingMaxAttempts(value: Int, onChange: (Int) -> Unit) {
 @Composable
 private fun SettingRoundsBestOf(value: Int, onChange: (Int) -> Unit) {
     Column {
-        Text("Rondas", style = MaterialTheme.typography.subtitle1)
+        Text("Rondas", style = MaterialTheme.typography.subtitle1, color = MaterialTheme.colors.onBackground)
         Spacer(Modifier.height(8.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -129,7 +174,8 @@ private fun SettingRoundsBestOf(value: Int, onChange: (Int) -> Unit) {
         Text(
             text = if (value == 1) "Sin rondas (una palabra por partida)"
             else "Mejor de $value palabras",
-            style = MaterialTheme.typography.caption
+            style = MaterialTheme.typography.caption,
+            color = MaterialTheme.colors.onBackground.copy(alpha = 0.7f)
         )
     }
 }
@@ -137,7 +183,7 @@ private fun SettingRoundsBestOf(value: Int, onChange: (Int) -> Unit) {
 @Composable
 private fun SettingDifficulty(value: Difficulty, onChange: (Difficulty) -> Unit) {
     Column {
-        Text("Dificultad (selección de palabra)", style = MaterialTheme.typography.subtitle1)
+        Text("Dificultad (selección de palabra)", style = MaterialTheme.typography.subtitle1, color = MaterialTheme.colors.onBackground)
         Spacer(Modifier.height(8.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -169,7 +215,8 @@ private fun SettingDifficulty(value: Difficulty, onChange: (Difficulty) -> Unit)
                 Difficulty.HARD -> "Palabras poco comunes o técnicas"
                 Difficulty.MIXTA -> "Todas las categorías mezcladas"
             },
-            style = MaterialTheme.typography.caption
+            style = MaterialTheme.typography.caption,
+            color = MaterialTheme.colors.onBackground.copy(alpha = 0.7f)
         )
     }
 }
@@ -177,7 +224,7 @@ private fun SettingDifficulty(value: Difficulty, onChange: (Difficulty) -> Unit)
 @Composable
 private fun TimerSecondsSelector(value: Int, onChange: (Int) -> Unit) {
     Column {
-        Text("Tiempo máximo: $value s", style = MaterialTheme.typography.body2)
+        Text("Tiempo máximo: $value s", style = MaterialTheme.typography.body2, color = MaterialTheme.colors.onBackground)
         Spacer(Modifier.height(8.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -211,7 +258,7 @@ private fun Stepper(
         ) { Text("-") }
 
         Spacer(Modifier.width(12.dp))
-        Text(value.toString(), style = MaterialTheme.typography.h6)
+        Text(value.toString(), style = MaterialTheme.typography.h6, color = MaterialTheme.colors.onBackground)
         Spacer(Modifier.width(12.dp))
 
         OutlinedButton(

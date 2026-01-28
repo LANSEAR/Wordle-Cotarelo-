@@ -18,7 +18,8 @@ class SimpleOnlineGameController(
     private val maxAttempts: Int,
     private val rounds: Int,
     private val difficulty: String,  // "EASY", "NORMAL", "HARD"
-    private val timerSeconds: Int = 0  // 0 = sin temporizador
+    private val timerSeconds: Int = 0,  // 0 = sin temporizador
+    private val playerName: String = ""
 ) {
     var state by mutableStateOf(GameState(rows = maxAttempts, cols = wordLength))
         private set
@@ -81,7 +82,8 @@ class SimpleOnlineGameController(
             wordLength = wordLength,
             maxAttempts = maxAttempts,
             difficulty = difficulty,
-            timerSeconds = timerSeconds
+            timerSeconds = timerSeconds,
+            playerName = playerName
         )
 
         return true

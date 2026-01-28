@@ -25,6 +25,7 @@ sealed class PVPServerResponse {
     data class RoundWinnerPVP(val data: RoundWinnerPVPResponse) : PVPServerResponse()
     data class GameWinnerPVP(val data: GameWinnerPVPResponse) : PVPServerResponse()
     data class OpponentDisconnected(val data: OpponentDisconnectedResponse) : PVPServerResponse()
+    data class RecordsData(val data: RecordsDataResponse) : PVPServerResponse()
     data class Error(val data: ErrorResponse) : PVPServerResponse()
     data class Unknown(val type: String) : PVPServerResponse()
 }
@@ -142,6 +143,13 @@ class PVPServerConnection(
     }
 
     /**
+     * Solicita sincronización de records
+     */
+    suspend fun syncRecords() {
+        sendMessage("SYNC_RECORDS", "{}")
+    }
+
+    /**
      * Sale de la sala actual
      */
     suspend fun leaveRoom() {
@@ -230,6 +238,10 @@ class PVPServerConnection(
                 "OPPONENT_DISCONNECTED" -> {
                     val data = json.decodeFromString<OpponentDisconnectedResponse>(message.data)
                     PVPServerResponse.OpponentDisconnected(data)
+                }
+                "RECORDS_DATA" -> {
+                    val data = json.decodeFromString<RecordsDataResponse>(message.data)
+                    PVPServerResponse.RecordsData(data)
                 }
                 "ERROR" -> {
                     val data = json.decodeFromString<ErrorResponse>(message.data)

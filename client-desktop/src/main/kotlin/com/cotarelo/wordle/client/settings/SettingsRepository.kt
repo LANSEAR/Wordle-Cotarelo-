@@ -22,19 +22,35 @@ class SettingsRepository(
     fun load(): AppSettings {
         return try {
             if (!settingsFile.exists()) {
-                val defaults = AppSettings().sanitized()
+                val defaults = createDefaultSettings()
                 save(defaults)
                 defaults
             } else {
                 val text = settingsFile.readText()
-                json.decodeFromString(AppSettings.serializer(), text).sanitized()
+                val loaded = json.decodeFromString(AppSettings.serializer(), text).sanitized()
+                // Si el playerName está vacío, generar uno nuevo
+                if (loaded.playerName.isEmpty()) {
+                    val withName = loaded.copy(playerName = generatePlayerName())
+                    save(withName)
+                    withName
+                } else {
+                    loaded
+                }
             }
         } catch (_: Exception) {
             // Si hay corrupción o formato raro, volvemos a defaults
-            val defaults = AppSettings().sanitized()
+            val defaults = createDefaultSettings()
             runCatching { save(defaults) }
             defaults
         }
+    }
+
+    private fun createDefaultSettings(): AppSettings {
+        return AppSettings(playerName = generatePlayerName()).sanitized()
+    }
+
+    private fun generatePlayerName(): String {
+        return "Jugador${(1000..9999).random()}"
     }
 
     fun save(settings: AppSettings) {

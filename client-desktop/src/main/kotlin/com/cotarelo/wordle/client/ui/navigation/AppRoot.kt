@@ -7,6 +7,8 @@ import androidx.compose.runtime.*
 import com.cotarelo.wordle.client.settings.SettingsRepository
 import com.cotarelo.wordle.client.settings.ThemeMode
 import com.cotarelo.wordle.client.network.PVPServerConnection
+import com.cotarelo.wordle.client.services.RecordsService
+import com.cotarelo.wordle.client.state.RecordsViewModel
 import com.cotarelo.wordle.client.ui.screens.GameScreen
 import com.cotarelo.wordle.client.ui.screens.GamePVEScreen
 import com.cotarelo.wordle.client.ui.screens.GamePVPScreen
@@ -14,6 +16,7 @@ import com.cotarelo.wordle.client.ui.screens.LobbyScreen
 import com.cotarelo.wordle.client.ui.screens.MenuScreen
 import com.cotarelo.wordle.client.ui.screens.RecordsScreen
 import com.cotarelo.wordle.client.ui.screens.SettingsScreen
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppRoot(
@@ -23,6 +26,11 @@ fun AppRoot(
     var settings by remember { mutableStateOf(repo.load()) }
     var screen by remember { mutableStateOf<Screen>(Screen.Menu) }
     var pvpConnection by remember { mutableStateOf<PVPServerConnection?>(null) }
+
+    val scope = rememberCoroutineScope()
+    // Recrear ViewModel cuando cambie el playerName
+    val recordsViewModel = remember(settings.playerName) { RecordsViewModel(settings.playerName, scope) }
+    val recordsService = remember(recordsViewModel) { RecordsService(recordsViewModel, scope) }
 
     val colors = when (settings.themeMode) {
         ThemeMode.DARK -> darkColors()
@@ -72,7 +80,18 @@ fun AppRoot(
                 onBack = { screen = Screen.Menu }
             )
 
-            Screen.Records -> RecordsScreen(onBack = { screen = Screen.Menu })
+            Screen.Records -> {
+                // Sincronizar records al entrar
+                LaunchedEffect(Unit) {
+                    scope.launch {
+                        recordsService.syncRecords()
+                    }
+                }
+                RecordsScreen(
+                    viewModel = recordsViewModel,
+                    onBack = { screen = Screen.Menu }
+                )
+            }
 
             Screen.Lobby -> LobbyScreen(
                 settings = settings,

@@ -86,7 +86,8 @@ class SimpleServerConnection(
         wordLength: Int,
         maxAttempts: Int,
         difficulty: String,
-        timerSeconds: Int = 0
+        timerSeconds: Int = 0,
+        playerName: String = ""
     ) {
         val request = StartGameRequest(
             mode = mode,
@@ -94,7 +95,8 @@ class SimpleServerConnection(
             wordLength = wordLength,
             maxAttempts = maxAttempts,
             difficulty = difficulty,
-            timerSeconds = timerSeconds
+            timerSeconds = timerSeconds,
+            playerName = playerName
         )
         sendMessage("START_GAME", json.encodeToString(request))
     }
@@ -189,6 +191,10 @@ class SimpleServerConnection(
                 "GAME_WINNER" -> {
                     val data = json.decodeFromString<GameWinnerResponse>(message.data)
                     ServerResponse.GameWinner(data)
+                }
+                "RECORDS_DATA" -> {
+                    val data = json.decodeFromString<RecordsDataResponse>(message.data)
+                    ServerResponse.RecordsData(data)
                 }
                 "ERROR" -> {
                     val data = json.decodeFromString<ErrorResponse>(message.data)

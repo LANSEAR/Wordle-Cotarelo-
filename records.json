@@ -13,10 +13,10 @@
             "totalWords": 5
         },
         "LANSEAR": {
-            "gamesLost": 8,
-            "totalGames": 8,
+            "gamesLost": 11,
+            "totalGames": 11,
             "attemptsDistribution": {
-                "0": 8
+                "0": 11
             }
         },
         "Jugador2171": {
@@ -125,6 +125,48 @@
             }
         },
         "Jugador5773": {
+            "gamesLost": 1,
+            "totalGames": 1,
+            "attemptsDistribution": {
+                "0": 1
+            }
+        },
+        "Jugador4797": {
+            "gamesLost": 1,
+            "totalGames": 1,
+            "attemptsDistribution": {
+                "0": 1
+            }
+        },
+        "Jugador2300": {
+            "gamesLost": 1,
+            "totalGames": 1,
+            "attemptsDistribution": {
+                "0": 1
+            }
+        },
+        "Jugador5565": {
+            "gamesLost": 1,
+            "totalGames": 1,
+            "attemptsDistribution": {
+                "0": 1
+            }
+        },
+        "Jugador8927": {
+            "gamesLost": 1,
+            "totalGames": 1,
+            "attemptsDistribution": {
+                "0": 1
+            }
+        },
+        "Jugador2022": {
+            "gamesLost": 2,
+            "totalGames": 2,
+            "attemptsDistribution": {
+                "0": 2
+            }
+        },
+        "LANSEAR2": {
             "gamesLost": 1,
             "totalGames": 1,
             "attemptsDistribution": {
